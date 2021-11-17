@@ -225,7 +225,7 @@ if (isset($_GET) && count($_GET)) {
     var layout$ = {
         // Properties
         layoutType: "feed",
-        sort: "controversial",
+        sort: "new",
         type:"all",
         currentSlide:0,
         after:"",
