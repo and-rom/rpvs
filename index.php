@@ -53,6 +53,7 @@ if (isset($_GET) && count($_GET)) {
         case "u":
             $path = isset($_GET['path']) ? $_GET['path'] : "/";
             $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
+            $options['t'] = isset($_GET['sortPeriod']) ? $_GET['sortPeriod'] : "";
             $options['after'] = isset($_GET['after']) ? $_GET['after'] : "";
             $apiRequest = $provider->getAuthenticatedRequest(
                 'GET',
@@ -277,7 +278,9 @@ if (isset($_GET) && count($_GET)) {
     var layout$ = {
         // Properties
         layoutType: "feed",
+        path: "/",
         sort: "new",
+        sortPeriod: "",
         type:"all",
         after:"",
         currentSlide:0,
@@ -290,10 +293,12 @@ if (isset($_GET) && count($_GET)) {
         // Methods
         save: function(){
             Cookies.set("layoutType", this.layoutType, { expires : 0.5 });
-            Cookies.set("sort", this.type, { expires : 0.5 });
+            Cookies.set("path", this.path, { expires : 0.5 });
+            Cookies.set("sort", this.sort, { expires : 0.5 });
+            Cookies.set("sortPeriod", this.sortPeriod, { expires : 0.5 });
             Cookies.set("type", this.type, { expires : 0.5 });
         },
-        update: function(restore = false, layoutType = "", sort = "", after = "", type = ""){
+        update: function(restore = false){
             if (this.updateLocked) {
                 return;
             }
@@ -301,12 +306,14 @@ if (isset($_GET) && count($_GET)) {
 
             $.ajax({
                 dataType: "json",
-                url: "./index.php",
+                url: "./",
                 async: true,
-                data: {action: layoutType != "" ? layoutType : this.layoutType,
-                       after: this.after,
-                       sort:  this.sort,
-                       type:  type != "" ? type : this.type,
+                data: {action:     this.layoutType,
+                       path:       this.path,
+                       sort:       this.sort,
+                       sortPeriod: this.sortPeriod,
+                       type:       this.type,
+                       after:      this.after,
                        },
                 context: this,
                 success: restore ? this.restore : this.response,
@@ -657,8 +664,11 @@ if (isset($_GET) && count($_GET)) {
             console.log("this.updateLocked: " + this.updateLocked);
             console.log("this.locked: " + this.locked);
             console.log("this.layoutType: " + this.layoutType);
-            console.log("this.blog: " + this.blog);
+            console.log("this.path: " + this.path);
+            console.log("this.sort: " + this.sort);
+            console.log("this.sortPeriod: " + this.sortPeriod);
             console.log("this.type: " + this.type);
+            console.log("this.after: " + this.after);
             console.log("this.currentSlide: " + this.currentSlide);
             console.log("this.slides.length: " + this.slides.length);
             console.log("this.slides");
@@ -810,15 +820,46 @@ if (isset($_GET) && count($_GET)) {
             break;
         }
     });
-    $("#type").change(function (e){
-        $("#header, #footer").hide();
-        $('#content').empty();
-        currentLayout.type=this.value;
+    $("#sort").on('click',function (e){
+        $("#sort-menu").toggle();
+        $("#sort-order").show();
+        $("#sort-period").hide();
+    });
+    $("#sort-order li").on('click',function (e){
+        currentLayout.sort=this.id.split("-")[1];
+        currentLayout.after="";
         currentLayout.currentSlide=0;
         currentLayout.slides=[];
-        currentLayout.update();
-        currentLayout.save();
-        $("#header, #footer").hide();
+         switch(this.id) {
+            case "sort-best":
+            case "sort-hot":
+            case "sort-new":
+            case "sort-rising":
+                currentLayout.update();
+                currentLayout.save();
+                break;
+            case "sort-controversial":
+            case "sort-top":
+                $("#sort-order").hide();
+                $("#sort-period").show();
+                break;
+         }
+         $("#sort-menu").hide();
+    });
+    $("#sort-period li").on('click',function (e){
+        currentLayout.sortPeriod=this.id.split("-")[1];
+
+    });
+    $("#close").on('click',function (e){
+        $("#sidebar").hide();
+    });
+    $("#fullscreen").on('click',function (e){
+        var requestFullScreen = document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullScreen || document.documentElement.msRequestFullscreen;
+        var cancelFullScreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+        if(!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement)
+            requestFullScreen.call(document.documentElement);
+        else
+            cancelFullScreen.call(document);
     });
     var timer;
     var hided = false;
