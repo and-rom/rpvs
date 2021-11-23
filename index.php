@@ -237,7 +237,8 @@ if (isset($_GET) && count($_GET)) {
             }
         }
         else {
-            exit("Returned state didn't match the expected value. Please go back and try again.");
+            $response->code = 401;
+            $response->msg = "Returned state didn't match the expected value. Please go back and try again.";
         }
     } else {
         $authorizationUrl = $provider->getAuthorizationUrl([
