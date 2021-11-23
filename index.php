@@ -918,6 +918,13 @@ if (isset($_GET) && count($_GET)) {
             }
         }
     });
+
+    $("#search").keyup(function(){
+        $('.sidebar-container li.multireddit, .sidebar-container li.subreddit').each((idx, li) => {
+            $(li).toggle($(li).text().indexOf($(this).val()) !== -1);
+        });
+    });
+
     // keybindings
     var enabled = true;
     $(document).on('keydown',function(e){
@@ -927,7 +934,8 @@ if (isset($_GET) && count($_GET)) {
             setMessage("Hot keys " + (enabled ? "enabled" : "disabled"));
             return;
         }
-        if (enabled) switch (code){
+
+        if (enabled && !$("input").is(":focus")) switch (code){
             case 37:  // left
             case 65:  // 'a'
                 currentLayout.show(1);
@@ -1288,6 +1296,11 @@ if (isset($_GET) && count($_GET)) {
         -webkit-border-radius: 5px;
         border-radius: 5px;
     }
+
+    #search {
+        width: calc(100% - 22px - 1rem);
+        margin: 5px 10px 11px;
+        background-color: transparent;
         color: white;
         font-size: large;
         border: 1px solid darkgray;
