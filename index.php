@@ -409,9 +409,9 @@ if (isset($_GET) && count($_GET)) {
             }
 
             if (this.currentSlide-1 < 0 ) {
-                Cookies.set("before", "", { expires : 0.5 });
+                Cookies.set("after", "", { expires : 0.5 });
             } else {
-                Cookies.set("before", this.slides[this.currentSlide-1].id, { expires : 0.5 });
+                Cookies.set("after", this.slides[this.currentSlide-1].name, { expires : 0.5 });
             }
         },
         displayPostInfo: function() {
@@ -721,7 +721,7 @@ if (isset($_GET) && count($_GET)) {
     currentLayout.update();
 
     $(document).one('auth',function (e){
-        if (typeof Cookies.get("before") !== 'undefined') {
+        if (typeof Cookies.get("after") !== 'undefined') {
             if (confirm('Do you want to restore dash?')) {
                 $('#content').empty();
                 if (Cookies.get("layoutType") == "dash") {
