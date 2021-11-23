@@ -350,16 +350,6 @@ if (isset($_GET) && count($_GET)) {
                                 //if (data.hasOwnProperty('debug_content')) this.debug_content = data.debug_content;
                                 //if (data.hasOwnProperty('debug_request')) this.debug_request = data.debug_request;
                                 break;
-                            case 404:
-                                /*setMessage(data.msg);
-                                $("#loader").hide();
-                                if (data.hasOwnProperty('posts')) {
-                                    if (data.posts.length == 0) this.noMore = true;
-                                    this.slides = this.slides.concat(data.posts);
-                                }
-                                this.updateLocked = false;
-                                this.clearPostInfo();*/
-                                break;
                             case 511:
                                 $("#loader").hide();
                                 setMessage(data.msg);
@@ -369,8 +359,6 @@ if (isset($_GET) && count($_GET)) {
                                     }, 1500)
                                 }
                                 break;
-                            case 201:
-                            case 202:
                             default:
                                 $("#loader").hide();
                                 setMessage(data.msg);
