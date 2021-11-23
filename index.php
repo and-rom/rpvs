@@ -48,12 +48,16 @@ if (isset($_GET) && count($_GET)) {
     $options['limit'] = 20;
     switch ($action) {
         case "feed":
+        case "sr":
+        case "mr":
+        case "u":
+            $path = isset($_GET['path']) ? $_GET['path'] : "/";
             $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
             $options['after'] = isset($_GET['after']) ? $_GET['after'] : "";
             $options['headers']['Accept'] = 'application/json';
             $apiRequest = $provider->getAuthenticatedRequest(
                 'GET',
-                'https://oauth.reddit.com/' . $sort . '.json?' . http_build_query($options),
+                'https://oauth.reddit.com' . $path . $sort . '?' . http_build_query($options),
                 $oauth2token
             );
             $apiResponse = $provider->getResponse($apiRequest);
@@ -98,7 +102,11 @@ if (isset($_GET) && count($_GET)) {
                 $obj->id = $post->data->id;
                 $obj->title = (isset($post->data->title) ? $post->data->title : "" );
                 $obj->subreddit = $post->data->subreddit;
+                $obj->url = '/'.$post->data->subreddit_name_prefixed.'/';
+                $obj->parent = isset($post->data->crosspost_parent) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
+                $obj->parent_url = isset($post->data->crosspost_parent) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
                 $obj->author = $post->data->author;
+                $obj->author_url = '/user/'.$post->data->author.'/submitted/';
                 $obj->locked = $post->data->locked;
                 if (isset($post->data->link_flair_text)) {
                     $obj->link_flair_text = $post->data->link_flair_text;
@@ -155,6 +163,53 @@ if (isset($_GET) && count($_GET)) {
             }
 
             $response->after = (isset($apiResponse->data->after)) ? $apiResponse->data->after : $last_id;
+        case "srs":
+            $response->s = [];
+            $options['after'] = '';
+            do {
+                $apiRequest = $provider->getAuthenticatedRequest(
+                    'GET',
+                    'https://oauth.reddit.com/subreddits/mine/subscriber?' . http_build_query($options),
+                    $oauth2token
+                );
+                $apiResponse = $provider->getResponse($apiRequest);
+                $content = (string) $apiResponse->getBody();
+                $apiResponse = json_decode($content);
+                foreach ($apiResponse->data->children as $s) {
+                    $obj = new stdClass;
+                    $obj->subreddit = $s->data->display_name;
+                    $obj->url = $s->data->url;
+                    $obj->icon = $s->data->community_icon;
+                    $response->s[] = clone $obj;
+                }
+                $options['after'] = $apiResponse->data->after;
+            } while ($options['after'] != '');
+            usort($response->s, function($a, $b) {
+                return strcmp(strtolower($a->subreddit), strtolower($b->subreddit));
+            });
+            $response->code = 200;
+            break;
+        case "mrs":
+            $response->m = [];
+            $apiRequest = $provider->getAuthenticatedRequest(
+                'GET',
+                'https://oauth.reddit.com/api/multi/mine?' . http_build_query($options),
+                $oauth2token
+            );
+            $apiResponse = $provider->getResponse($apiRequest);
+            $content = (string) $apiResponse->getBody();
+            $apiResponse = json_decode($content);
+
+            foreach ($apiResponse as $m) {
+                $obj = new stdClass;
+                $obj->multireddit = $m->data->display_name;
+                $obj->url = $m->data->path;
+                $obj->icon = $m->data->icon_url;
+                $response->m[] = clone $obj;
+            }
+            usort($response->m, function($a, $b) {
+                return strcmp(strtolower($a->multireddit), strtolower($b->multireddit));
+            });
             $response->code = 200;
             break;
         default:
@@ -360,9 +415,28 @@ if (isset($_GET) && count($_GET)) {
             }
         },
         displayPostInfo: function() {
+            switch (this.layoutType) {
+                case "feed":
+                    $("#layout").html("Front Page");
+                    break;
+                case "sr":
+                    $("#layout").html(this.slides[this.currentSlide].subreddit);
+                    break;
+                case "mr":
+                    $("#layout").html(this.path.split("/").at(-2));
+                    break;
+                case "u":
+                    $("#layout").html(this.slides[this.currentSlide].author);
+                    break;
+            }
+            $("#sort").html(this.sort);
             $("#title").html(this.slides[this.currentSlide].title).show();
-            $("#subreddit").html(this.slides[this.currentSlide].subreddit).show();
-            $("#author").html(this.slides[this.currentSlide].author).show();
+            $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
+            if ( this.slides[this.currentSlide].parent != "") {
+                $("#parent span").html(this.slides[this.currentSlide].parent)
+                $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url).show();
+            }
+            $("#author").html(this.slides[this.currentSlide].author).attr('data-url', this.slides[this.currentSlide].author_url).show();
             $("#locked").toggle(this.slides[this.currentSlide].locked);
             if (this.slides[this.currentSlide].link_flair_text) {
                 $("#flair").empty().append($('<span />', {
@@ -390,8 +464,9 @@ if (isset($_GET) && count($_GET)) {
         },
         clearPostInfo: function(partial = false) {
             $("#title").empty().hide();
-            $("#subreddit").empty().hide();
-            $("#author").empty().hide();
+            $("#subreddit").empty().hide().removeData();
+            $("#parent span").empty(); $("#parent").hide().removeData();
+            $("#author").empty().hide().removeData();
             $("#locked").hide();
             $("#flair").empty().hide();
             $("#domain").empty().hide();
@@ -667,6 +742,47 @@ if (isset($_GET) && count($_GET)) {
             }
         }
         currentLayout.save();
+        var ph="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABGZJREFUeJztm01sVFUUx3/33MICB6QIxKWtoRihCiQukbjRxLjx25igMUZDYqLCQncCSwshasKGiGGB1cQ1MVU3tnWNtIWE1qgxEss4dUpqE43OPBf3PZwOM/M+7nv3vlp/yUk6ze0953/e67z77j1HUTzbQO+HYBjYCWoIgi3AZqASjvkdWAS1AMEsMAtqChoTQM1BjLmzF+QkyDRIEyTIaE2QKZATwB7fouKogBwBuWwhOM5mQA7z751TCvpBjoMsFCi83WogxzD/Rt5QoF8AmXcovFMi3gDEtfhB0JMehbeZngAGHGnXT4D85l/0LXYD9HNFKheQUyUQGmcnAZW3+PUgH5dAXFI7D6zLUby6UAJRKU1dMLHboUDO+ReT2T6B3k8I3Vu/nAIOZUjcNeAzCH4ENQj0xYyvQzAOahK4AsEPwM+gGphnfdbH3G5QFQi+yPC3+plsWdffAP0tEw2AzHUfqx+jd4I2gT4IMpv9TtBPp1U/CLKYzRn7Osy3C6TRMm4J9Muk+7beYLH2WDSakqEsHNV7TPt5OOYnYHcK4a0MW9wFkyRLuH7J4ktnpvu8cgykCtydUXw0T9UiCS/Gzd4Pct0iAVPdp9YHzSrSFvneIr55er9AyXGLyWMSwG324tkC8rdljEe7TV7B/pW2VwI6sQn0K6C+BPkOZAnkKsg50I+ycjW3HuS8ZXwBSI3O+wlyJIfJ0yTgQZBrMfNVQUZBTocJso0vssOdEpDHTk7SBBwA+StHQWnt5pd1tMLaB9yb4urZ0A/yKfGrwyLZRbjHGCZAnnfnW14H7nTnrxtGc3QHPOzIqwZec+QrjkfAJGAb2VdmaXkg9FcGhoGtYg4t8t9B6YwccOMnEQr0foHgPodO73HoKwHBsAA73DlUlu8BuTMk5qzOFYHXg4xbUTsEgu0OPW5w6CsBwXbB7Tmb9SZlzmx0nYCysdH5mVrZEExxwlpl6f8EgKr6jsIfqiphTc4aJZgVYM53GB6ZE1ONtVZR0wKNr4Gm71A8EEBjQoAF4LLvaDwwBdSihdCYz0g8MQY3t8Saoz4j8YPRHN0BF4Ee53r/Oa4Al4AVhQcf+YnFC2eiH1oS0DzDKi1MTskCNM9GH1rvgGXgtPt4nPM+Le8/ba/DzfeA627jcco8ND9o/UX7fsAiqLcdBuQY9RZwI3aUqb3NfPTcjT6QP/wdiOpxUpx/DIDUszlibxf9D3k8Da4DdyUVH6KfyujsYgdnOzGFD76u/pMpxUfIiYxOl0GNgXwI6iuQPz1e/ZGM4oHVXyo7CvbNFOtWcbF0bhXjfSBn/YtKbLmWy0coTCucb3FxNkKxx/36ccrbMvNsgcJXMFCypqlx0j/nrSlD29wvoF8F921zrWwGOYrp4XMl/FeQd4DbfQpvpwLyJqa9tSjh05hGyTzqjgtlD8gIyCVWNkqktQbItyDvAvcXEaiL6rCtLe3zQ2H7/B2YtproSi4DdVA1COaAq6BmoDGO2bYvjH8AJnU6lSYCwysAAAAASUVORK5CYII="
+        $.ajax({
+            dataType: "json",
+            url: "./",
+            async: true,
+            data: {action: "mrs"},
+            beforeSend: function (data) {$("#loader").show();},
+            success: function (data) {
+                $("#loader").hide();
+
+                $.each(data.m, function(i, obj) {
+                    $("ul#m").append(
+                        $("<li />", {'data-url': obj.url}).append(
+                                $('<img />', {
+                                    src: obj.icon
+                                }), $('<span />').addClass('title').html(obj.multireddit)).addClass('multireddit'));
+                });
+            }
+        });
+        $.ajax({
+            dataType: "json",
+            url: "./",
+            async: true,
+            data: {action: "srs"},
+            beforeSend: function (data) {$("#loader").show();},
+            success: function (data) {
+                $("#loader").hide();
+
+                $.each(data.s, function(i, obj) {
+                    $("ul#s").append(
+                        $("<li />", {'data-url': obj.url}).append(
+                                $('<span />').addClass('icon-back').append(
+                                    $('<img />', {
+                                        src: obj.icon != '' ? obj.icon : ph
+                                    }).toggleClass("random" + (Math.floor(Math.random() * (8)) + 1), obj.icon == '')
+                                      .on("error", function () {
+                                          $(this).attr("src", ph).addClass("random" + (Math.floor(Math.random() * (8)) + 1));
+                                      })), $('<span />').addClass('title').html(obj.subreddit)).addClass('subreddit'));
+                });
+            }
+        });
     });
 
     $(window).resize(function (e){
@@ -674,16 +790,34 @@ if (isset($_GET) && count($_GET)) {
     });
 
     $("#content").on('click',function (e){
-        if ($(currentLayout.iframe).is("video")) {
-            if ($(currentLayout.iframe)[0].paused) {
-                $(currentLayout.iframe)[0].play();
-                $("#header, #footer").hide();
-            } else {
-                $(currentLayout.iframe)[0].pause();
-                $("#header, #footer").show();
-            }
-        } else {
-            $("#header, #footer").toggle();
+        $(".header").toggle();
+        $("#sidebar").hide();
+    });
+    $(document).on('click', '.subreddit, .multireddit, #author', function (e){
+        layouts.push({
+        __proto__: layout$,
+            layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
+            path: $(this).data("url")
+        });
+        currentLayout = layouts[layouts.length-1];
+        currentLayout.update();
+        currentLayout.save();
+        $("#sidebar").hide();
+        $("#back").show();
+        if (layouts.length > 2) $("#home").show();
+    });
+    $("#home, #back, #sidebar-home").on('click',function (e){
+        if (layouts.length <= 1) return;
+        switch(this.id) {
+            case 'home':
+            case 'sidebar-home':
+                while (layouts.length > 1) {
+                    layouts.pop();
+                }
+            break;
+            case 'back':
+                layouts.pop();
+            break;
         }
     });
     $("#type").change(function (e){
@@ -1124,26 +1258,85 @@ if (isset($_GET) && count($_GET)) {
         <div id="header">
             <div id="title"></div>
             <div class="row">
-                <div id="subreddit" class="header-container with-dot"></div>
-                <div id="author" class="header-container with-dot"></div>
-                <div id="locked" class="header-container with-dot">&#128274;</div>
-                <div id="flair" class="header-container with-dot"></div>
-                <div id="domain" class="header-container with-dot"></div>
-                <div id="date" class="header-container"></div>
+                <div id="subreddit" class="subheader-container with-dot subreddit" style="display: none;"></div>
+                <div id="parent" class="subheader-container with-dot subreddit" style="display: none;">
+                    <svg id="parent-icon" class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                        <path d="m 71.514718,69.553009 c -6.753854,-0.893227 -10.975013,-5.016394 -16.42483,-10.877021 -2.626917,-2.834206 -5.381977,-5.962386 -8.758904,-8.740059 5.261373,-4.390759 9.090567,-9.497607 13.127049,-13.202427 3.81035,-3.471149 7.164663,-5.728715 12.056685,-6.361889 V 40.07274 L 99.992462,23.629066 71.514718,7.185392 v 9.9951 c -12.591867,1.002525 -20.54046,8.962424 -26.137264,15.124562 -3.082953,3.376927 -5.792786,6.376965 -8.336788,8.26141 -2.58169,1.888215 -4.62443,2.751291 -7.586778,2.796518 -0.0038,0 -0.0075,0 -0.01131,0 H 0 v 13.19112 h 0.0038 v 0.0038 c 0,0 0.173369,-0.0038 0.516338,-0.0038 h 28.933781 c 2.962348,0.04146 5.012625,0.908303 7.601854,2.800287 3.848038,2.796517 7.895828,8.219952 13.387103,13.447405 4.944785,4.741266 11.921004,9.267704 21.07941,9.972487 V 92.814608 L 100,76.397317 71.522255,59.96118 l -0.0075,9.591829 z"/>
+                    </svg>
+                    <span></span>
+                </div>
+                <div id="author" class="subheader-container with-dot" style="display: none;"></div>
+                <div id="locked" class="subheader-container with-dot" style="display: none;">&#128274;</div>
+                <div id="flair" class="subheader-container with-dot" style="display: none;"></div>
+                <div id="domain" class="subheader-container with-dot" style="display: none;"></div>
+                <div id="date" class="subheader-container" style="display: none;"></div>
             </div>
             <div class="row">
-                <div id="score" class="header-container with-dot"></div>
-                <div id="num_comments" class="header-container"><span>0</span> comments</div>
-                <div id="nsfw" class="header-container">&#128286;</div>
-                <div id="all_awardings" class="header-container"></div>
-                <div id="total_awards_received" class="header-container"><span>0</span> awards</div>
+                <div id="score" class="subheader-container with-dot" style="display: none;"></div>
+                <div id="num_comments" class="subheader-container" style="display: none;"><span>0</span> comments</div>
+                <div id="nsfw" class="subheader-container" style="display: none;">&#128286;</div>
+                <div id="all_awardings" class="subheader-container" style="display: none;"></div>
+                <div id="total_awards_received" class="subheader-container" style="display: none;"><span>0</span> awards</div>
             </div>
         </div>
         <div id="messages"></div>
         <div id="loader"></div>
         <div id="content"></div>
-        <div id="footer"></div>
-<svg style="display:none" id="svg-icons">
+        <div id="sidebar">
+            <svg id="close" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+              <path d="M88.8,77.5L60.6,49.3l28.2-28.2c1.2-1.2,1.2-3.1,0-4.2l-8.5-8.5L50,38.7L19.6,8.3l-8.5,8.5c-1.2,1.2-1.2,3.1,0,4.2  l28.2,28.2L11.2,77.5c-1.2,1.2-1.2,3.1,0,4.2l8.5,8.5L50,59.9l30.4,30.4l8.5-8.5C90,80.6,90,78.7,88.8,77.5z"/>
+            </svg>
+            <div class="sidebar-container">
+                <input id="search" placeholder="Search..." type="text" />
+                <ul id="h">
+                    <li id="sidebar-home" class="home">
+                        <svg class="svg-icon" viewBox="0 0 100 100" version="1.1" x="0px" y="0px" width="100%" height="100%">
+                            <path d="M 82.916596,56.420924 51.203289,31.690592 c -0.707436,-0.551664 -1.699217,-0.551664 -2.406849,0 L 17.083328,56.420924 c -0.475538,0.370842 -0.75362,0.940118 -0.75362,1.543249 l 0,32.571429 c 0,1.080822 0.876321,1.956947 1.956947,1.956947 l 63.426614,0 c 1.080627,0 1.956948,-0.876125 1.956948,-1.956947 l 0,-32.571429 c 0,-0.603131 -0.278083,-1.172407 -0.753621,-1.543249" />
+                            <path d="M 99.197477,45.621688 51.208827,7.9256021 c -0.709785,-0.557535 -1.708023,-0.557535 -2.417808,0 L 0.80237008,45.621688 c -0.40802348,0.320548 -0.67201565,0.790215 -0.73405088,1.305479 -0.06183953,0.51546 0.08356165,1.034247 0.40410959,1.44227 l 6.81389441,8.674364 c 0.3863013,0.49139 0.9602739,0.748141 1.5403131,0.748141 0.4228963,0 0.8491194,-0.136595 1.2076317,-0.4182 L 50.000021,25.979613 89.965774,57.373742 c 0.40822,0.320744 0.927006,0.466145 1.442271,0.40411 0.515459,-0.06184 0.984931,-0.326027 1.305675,-0.734051 l 6.813894,-8.674364 c 0.667506,-0.849902 0.519766,-2.080039 -0.330137,-2.747749" />
+                        </svg><span class="title">Front Page</span>
+                    </li>
+                </ul>
+                <ul id="m"></ul>
+                <ul id="s"></ul>
+            </div>
+        </div>
+        <div id="sort-menu" style="display:none">
+            <ul id="sort-order">
+                <li id="sort-best">
+                    <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                        <path d="M 97.420917,5e-7 C 79.162648,0.0340405 64.989874,0.8170985 46.352237,19.454735 40.83682,24.970152 36.514449,30.869344 33.119598,36.496626 19.267826,36.6474 14.204503,37.941067 6.378837,49.064312 c -0.773326,1.099193 -0.278446,2.012271 1.06393,2.080364 3.662353,0.189683 10.839175,0.838376 17.307876,2.963807 -1.24024,3.448352 -2.000117,6.176801 -2.384348,7.703997 -0.199412,0.783054 0.133906,1.886657 0.702957,2.450845 L 35.589435,76.78351 c 0.569051,0.56905 1.672655,0.90237 2.450844,0.70295 1.532061,-0.37936 4.255646,-1.14897 7.703998,-2.384343 2.130293,6.468703 2.778987,13.655023 2.963807,17.317373 0.06809,1.33751 0.98117,1.82776 2.080363,1.05443 C 61.911692,85.65312 63.19586,80.5898 63.346634,66.733162 68.973916,63.328583 74.882606,59.01594 80.398024,53.500523 99.03566,34.862886 99.818713,20.690111 99.852759,2.4318415 99.852759,1.0894655 98.75843,5.0000001e-7 97.420917,5e-7 Z M 70.670656,19.454736 c 5.369507,0 9.727368,4.35786 9.727368,9.727367 0,5.369507 -4.357861,9.727368 -9.727368,9.727368 -5.369507,0 -9.727367,-4.357861 -9.727367,-9.727368 0,-5.369507 4.35786,-9.727367 9.727367,-9.727367 z m -54.155979,50.7647 C 9.206142,70.420908 2.575284,76.86901 0.147241,84.962479 c 1.376423,-1.47856 2.834996,-2.554649 4.075236,-3.1918 1.245103,-0.63714 2.718571,-0.36873 3.657262,0.56997 0.22373,0.22859 0.414325,0.48713 0.569963,0.77895 0.787917,1.53692 0.187784,3.41521 -1.339413,4.21772 -0.773326,0.41828 -6.714392,3.9275 -5.367151,12.66268 4.863684,-5.75374 11.88213,-3.03889 19.245748,-5.50964 7.135023,-2.38321 10.701698,-10.63414 6.621068,-18.35281 0.744143,5.28196 -4.012082,12.61525 -13.394128,10.38282 2.675026,-0.77332 5.088249,-2.49894 6.450081,-5.31015 0.520414,-1.07487 0.275178,-2.32765 -0.522466,-3.12529 -0.209139,-0.21401 -0.468358,-0.39093 -0.750452,-0.53197 -1.001918,-0.48637 -2.147164,-0.30094 -2.944808,0.37998 -0.821962,-3.793681 2.611646,-6.68696 6.28859,-6.307598 -2.075728,-1.022434 -4.175705,-1.46232 -6.222094,-1.405905 z" />
+                    </svg>Best</li>
+                <li id="sort-hot">
+                    <svg class="svg-icon" viewBox="0 0 100 100" x="0px" y="0px" width="100%" height="100%">
+                        <path d="m 47.424068,97.936691 c 0,0 -32.897604,0.128156 -32.897604,-28.066128 0,-28.194285 29.257978,-35.883635 29.257978,-57.772652 0,-6.0105087 -1.601948,-8.650519 -5.04934,-12.097911 15.545303,0.4741766 27.912341,16.096373 27.912341,38.280149 0,4.40856 -1.601948,13.533256 -3.524285,15.455594 -1.922338,1.922337 12.495194,-8.727413 12.495194,-18.018711 0,0 9.855184,9.368192 9.855184,29.642445 C 85.473536,85.633731 63.738306,100 53.408945,100 59.893631,93.515315 64.302191,87.351019 64.302191,80.058952 c 0,-14.71229 -12.328591,-13.430732 -15.3787,-20.927849 A 7.3689607,7.3689607 0 0 1 48.474946,57.567602 7.6893502,7.6893502 0 0 1 49.88466,51.91593 l 3.357683,-4.844291 c 0,0 -19.146482,5.510701 -19.146482,26.015635 0,20.504934 10.201204,21.709599 13.328207,24.849417 z"/>
+                    </svg>Hot</li>
+                <li id="sort-new">
+                    <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                        <path d="M 100,50.052632 C 100,45.210526 88.947368,42.157895 87.578947,37.842105 86.105263,33.315789 93.263158,24.368421 90.526316,20.684211 87.789474,16.894737 77.052632,20.894737 73.263158,18.157895 69.473684,15.421053 70,3.9473683 65.473684,2.4736841 61.157895,1.1052631 54.842105,10.578947 50,10.578947 45.157895,10.578947 38.947368,1.1052631 34.526316,2.4736841 30,3.9473683 30.526316,15.421053 26.842105,18.157895 23.052632,20.894737 12.315789,16.894737 9.5789474,20.684211 6.8421053,24.473684 13.894737,33.315789 12.526316,37.842105 11.052632,42.157895 0,45.210526 0,50.052632 0,54.894737 11.052632,57.947368 12.421053,62.263158 13.894737,66.789474 6.7368421,75.736842 9.4736842,79.421053 12.210526,83.210526 22.947368,79.210526 26.736842,81.947368 30.526316,84.684211 30,96.157895 34.526316,97.526316 38.842105,98.894737 45.157895,89.421053 50,89.421053 c 4.842105,0 11.052632,9.473684 15.473684,8.105263 4.526316,-1.473684 4,-12.842105 7.789474,-15.578948 3.789474,-2.736842 14.526316,1.263158 17.263158,-2.526315 C 93.263158,75.631579 86.210526,66.789474 87.578947,62.263158 88.947368,57.947368 100,54.894737 100,50.052632 Z"/>
+                    </svg>New</li>
+                <li id="sort-rising">
+                <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                    <path d="M 88.042064,36.83251 59.735457,65.142271 43.131819,48.540453 7.931819,83.738639 5e-7,75.807728 43.131819,32.675907 59.733638,49.279544 80.111277,28.901726 67.470911,16.261361 H 100 v 32.529092 z" />
+                </svg>Rising</li>
+                <li id="sort-controversial">
+                    <svg class="svg-icon" viewBox="0 0 100 100" x="0px" y="0px" width="100%" height="100%">
+                        <path d="M 9.375,7.3422906e-4 C 4.197344,7.3422906e-4 0,4.1980462 0,9.3757342 V 65.625734 c 0,5.177812 4.197344,9.375 9.375,9.375 h 9.375 v 21.875 c 0,1.20125 0.687332,2.293409 1.770019,2.813722 1.082719,0.520304 2.370075,0.377994 3.308106,-0.372316 L 54.223631,75.000734 H 90.625 c 5.177813,0 9.375,-4.197188 9.375,-9.375 V 9.3757342 C 100,4.1980782 95.802813,7.3422906e-4 90.625,7.3422906e-4 Z m 0,6.24999997094 h 81.25 c 1.725937,0 3.125,1.399125 3.125,3.125 V 65.625734 c 0,1.725937 -1.399063,3.125 -3.125,3.125 h -37.5 c -0.709688,0 -1.399063,0.240469 -1.953125,0.683594 L 25,90.37549 V 71.875734 c 0,-1.725938 -1.399125,-3.125 -3.125,-3.125 h -12.5 c -1.725875,0 -3.125,-1.399063 -3.125,-3.125 V 9.3757342 c 0,-1.725875 1.399094,-3.125 3.125,-3.125 z M 47.052003,18.750734 47.9187,44.452637 h 6.115725 l 0.866697,-25.701903 z m 3.924559,29.730225 c -1.222812,0 -2.21414,0.375859 -2.978515,1.123047 -0.747188,0.730312 -1.123047,1.656162 -1.123047,2.7771 0,1.120937 0.375859,2.046787 1.123047,2.7771 0.764375,0.730312 1.755703,1.092528 2.978515,1.092528 1.239688,0 2.231329,-0.362216 2.978516,-1.092528 0.764375,-0.730313 1.147463,-1.656163 1.14746,-2.7771 0,-1.138125 -0.383085,-2.077307 -1.14746,-2.807619 -0.747187,-0.730313 -1.738828,-1.092528 -2.978516,-1.092528 z" />
+                    </svg>Controversial</li>
+                <li id="sort-top">
+                    <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                        <path d="m 39.258982,5.585703 v 83.24289 H 60.741018 V 5.585703 Z M 72.158028,36.309412 V 88.828593 H 93.637725 V 36.309412 Z M 6.3622754,49.34506 V 88.828593 H 27.841972 V 49.34506 Z M 0,90.625 v 3.789297 H 100 V 90.625 H 95.434132 70.36162 62.537425 37.462575 29.63838 4.5658683 Z" />
+                    </svg>Top</li>
+            </ul>
+            <ul id="sort-period" style="display:none">
+                <li id="sort-hour">Hour</li>
+                <li id="sort-day">Day</li>
+                <li id="sort-week">Week</li>
+                <li id="sort-month">Month</li>
+                <li id="sort-year">Year</li>
+                <li id="sort-all">All time</li>
+            </ul>
+        </div>
+<svg style="display:none">
   <svg id="error-icon">
     <svg viewBox="0 0 253 253" x="0px" y="0px" width="100%" height="100%">
       <polygon points="86,127 0,41 41,0 127,86 213,0 253,41 167,127 253,213 213,253 127,167 41,253 0,213 "/>
