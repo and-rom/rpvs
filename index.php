@@ -358,8 +358,7 @@ if (isset($_GET) && count($_GET)) {
                         this.slides = this.slides.concat(data.posts);
                     }
                     this.updateLocked = false;
-                    this.clearPostInfo();
-                    $("#header, #footer").show();*/
+                    this.clearPostInfo();*/
                     break;
                 case 511:
                     $("#loader").hide();
@@ -386,8 +385,8 @@ if (isset($_GET) && count($_GET)) {
             $("#loader").show();
             this.locked = true;
         },
-        unlock: function() {
-            if (!this.updateLocked) $("#loader").hide();
+        unlock: function(loader = true) {
+            if (!this.updateLocked && loader) $("#loader").hide();
             this.locked = false;
         },
         checkHidden: function() {
@@ -402,18 +401,15 @@ if (isset($_GET) && count($_GET)) {
             if (this.slides.length == 0) {
                 this.unlock();
                 this.clearPostInfo(true);
-                $("#header, #footer").show();
                 return;
-            } else {
-                this.clearPostInfo();
             }
-            this.displayPostInfo();
             if (this.slides[this.currentSlide].type == "photo") {
                 this.displayPhoto();
             } else {
                 this.displayVideo();
             }
-
+            this.clearPostInfo();
+            this.displayPostInfo();
             if (this.currentSlide-1 < 0 ) {
                 Cookies.set("after", "", { expires : 0.5 });
             } else {
@@ -488,7 +484,7 @@ if (isset($_GET) && count($_GET)) {
             this.iframe.src = this.slides[this.currentSlide].src;
             var _this = this;
             this.iframe.onerror = function() {
-                $('#content').empty();
+                $('#content').empty().append($("#error-icon").clone());
                 setMessage("Load error");
                 _this.unlock();
             };
@@ -504,6 +500,7 @@ if (isset($_GET) && count($_GET)) {
                 id: 'video',
                 src: this.slides[this.currentSlide].src,
                 type: 'video/mp4',
+                poster: this.slides[this.currentSlide].preview,
                 loop: ''
             }));
             this.iframe = $('video').first();
@@ -522,7 +519,7 @@ if (isset($_GET) && count($_GET)) {
             var img = new Image();
             img.src = this.slides[this.currentSlide].preview;
             img.onload = function(){
-                _this.unlock();
+                _this.unlock(false);
             };
 
 
@@ -551,7 +548,7 @@ if (isset($_GET) && count($_GET)) {
             });
         },
         show: function(whereTo) {
-            if (!this.locked) {
+            if (!this.locked && this.slides.length > 0) {
                 if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && this.slides[this.currentSlide].video_type == "tumblr") {
                     this.iframe[0].pause();
                     $(this.iframe).attr('src','');
@@ -833,6 +830,9 @@ if (isset($_GET) && count($_GET)) {
         currentLayout.display();
         if (layouts.length < 3) $("#home").hide();
         if (layouts.length == 1) $("#back").hide();
+    });
+    $("#layout").on('click',function (e){
+         $("#sidebar").toggle();
     });
     $("#sort").on('click',function (e){
         $("#sort-menu").toggle();
