@@ -276,860 +276,861 @@ if (isset($_GET) && count($_GET)) {
         <script type="text/javascript" src="js/js.cookie.min.js"></script>
         <script type="text/javascript" src="js/jquery-3.6.0.min.js"></script>
         <script type="text/javascript">
-  $(document).ready(function(){
-    var currentLayout;
+            $(document).ready(function () {
+                var currentLayout;
 
-    var layouts = [];
+                var layouts = [];
 
-    var layout$ = {
-        // Properties
-        layoutType: "feed",
-        path: "/",
-        sort: "new",
-        sortPeriod: "",
-        type:"all",
-        after:"",
-        currentSlide:0,
-        slides: [],
-        noMore: false,
-        iframe: null,
-        locked: false,
-        wasHidden: false,
-        updateLocked: false,
-        // Methods
-        save: function(){
-            Cookies.set("layoutType", this.layoutType, { expires : 0.5 });
-            Cookies.set("path", this.path, { expires : 0.5 });
-            Cookies.set("sort", this.sort, { expires : 0.5 });
-            Cookies.set("sortPeriod", this.sortPeriod, { expires : 0.5 });
-            Cookies.set("type", this.type, { expires : 0.5 });
-        },
-        update: function(restore = false){
-            if (this.updateLocked) {
-                return;
-            }
-            $("#loader").show();
-
-            $.ajax({
-                dataType: "json",
-                url: "./",
-                async: true,
-                data: {action:     this.layoutType,
-                       path:       this.path,
-                       sort:       this.sort,
-                       sortPeriod: this.sortPeriod,
-                       type:       this.type,
-                       after:      this.after,
-                       },
-                context: this,
-                success: restore ? this.restore : this.response,
-                error: this.error
-            });
-        },
-        restore:  function(data){
-            this.response(data);
-            setMessage("Restored");
-        },
-        response: function(data){
-            switch (data.code) {
-                case 200:
-                    $(document).trigger('auth');
-                    if (data.hasOwnProperty('posts')) {
-                        $("#loader").hide();
-                        if (data.posts.length == 0) {
-                            this.noMore = true;
-                            setMessage("No more posts.");
+                var layout$ = {
+                    // Properties
+                    layoutType: "feed",
+                    path: "/",
+                    sort: "new",
+                    sortPeriod: "",
+                    type: "all",
+                    after: "",
+                    currentSlide: 0,
+                    slides: [],
+                    noMore: false,
+                    iframe: null,
+                    locked: false,
+                    wasHidden: false,
+                    updateLocked: false,
+                    // Methods
+                    save: function () {
+                        Cookies.set("layoutType", this.layoutType, { expires: 0.5 });
+                        Cookies.set("path", this.path, { expires: 0.5 });
+                        Cookies.set("sort", this.sort, { expires: 0.5 });
+                        Cookies.set("sortPeriod", this.sortPeriod, { expires: 0.5 });
+                        Cookies.set("type", this.type, { expires: 0.5 });
+                    },
+                    update: function (restore = false) {
+                        if (this.updateLocked) {
+                            return;
                         }
-                        this.slides = this.slides.concat(data.posts);
+                        $("#loader").show();
+
+                        $.ajax({
+                            dataType: "json",
+                            url: "./",
+                            async: true,
+                            data: {
+                                action:     this.layoutType,
+                                path:       this.path,
+                                sort:       this.sort,
+                                sortPeriod: this.sortPeriod,
+                                type:       this.type,
+                                after:      this.after,
+                            },
+                            context: this,
+                            success: restore ? this.restore : this.response,
+                            error: this.error
+                        });
+                    },
+                    restore: function (data) {
+                        this.response(data);
+                        setMessage("Restored");
+                    },
+                    response: function (data) {
+                        switch (data.code) {
+                            case 200:
+                                $(document).trigger('auth');
+                                if (data.hasOwnProperty('posts')) {
+                                    $("#loader").hide();
+                                    if (data.posts.length == 0) {
+                                        this.noMore = true;
+                                        setMessage("No more posts.");
+                                    }
+                                    this.slides = this.slides.concat(data.posts);
+                                    this.updateLocked = false;
+                                    if (this.currentSlide == 0) {
+                                        this.display();
+                                    }
+                                }
+                                if (data.hasOwnProperty('after')) this.after = data.after;
+                                //if (data.hasOwnProperty('debug_content')) this.debug_content = data.debug_content;
+                                //if (data.hasOwnProperty('debug_request')) this.debug_request = data.debug_request;
+                                break;
+                            case 404:
+                                /*setMessage(data.msg);
+                                $("#loader").hide();
+                                if (data.hasOwnProperty('posts')) {
+                                    if (data.posts.length == 0) this.noMore = true;
+                                    this.slides = this.slides.concat(data.posts);
+                                }
+                                this.updateLocked = false;
+                                this.clearPostInfo();*/
+                                break;
+                            case 511:
+                                $("#loader").hide();
+                                setMessage(data.msg);
+                                if (data.hasOwnProperty('auth_url')) {
+                                    setTimeout(function () {
+                                        window.location.href = data.auth_url;
+                                    }, 1500)
+                                }
+                                break;
+                            case 201:
+                            case 202:
+                            default:
+                                $("#loader").hide();
+                                setMessage(data.msg);
+                                break;
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        setMessage("Update error!");
                         this.updateLocked = false;
-                        if (this.currentSlide == 0) {
-                            this.display();
+                    },
+                    lock: function () {
+                        $("#loader").show();
+                        this.locked = true;
+                    },
+                    unlock: function (loader = true) {
+                        if (!this.updateLocked && loader) $("#loader").hide();
+                        this.locked = false;
+                    },
+                    checkHidden: function () {
+                        if ($('body').is(":visible")) {
+                            this.wasHidden = false;
+                        } else {
+                            this.wasHidden = true;
+                        }
+                    },
+                    display: function () {
+                        this.lock();
+                        if (this.slides.length == 0) {
+                            this.unlock();
+                            this.clearPostInfo(true);
+                            return;
+                        }
+                        if (this.slides[this.currentSlide].type == "photo") {
+                            this.displayPhoto();
+                        } else {
+                            this.displayVideo();
+                        }
+                        this.clearPostInfo();
+                        this.displayPostInfo();
+                        if (this.currentSlide - 1 < 0) {
+                            Cookies.set("after", "", { expires: 0.5 });
+                        } else {
+                            Cookies.set("after", this.slides[this.currentSlide - 1].name, { expires: 0.5 });
+                        }
+                    },
+                    displayPostInfo: function () {
+                        switch (this.layoutType) {
+                            case "feed":
+                                $("#layout").html("Front Page");
+                                break;
+                            case "sr":
+                                $("#layout").html(this.slides[this.currentSlide].subreddit);
+                                break;
+                            case "mr":
+                                $("#layout").html(this.path.split("/").at(-2));
+                                break;
+                            case "u":
+                                $("#layout").html(this.slides[this.currentSlide].author);
+                                break;
+                        }
+                        $("#sort").html(this.sort);
+                        $("#title").html(this.slides[this.currentSlide].title).show();
+                        $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
+                        if (this.slides[this.currentSlide].parent != "") {
+                            $("#parent span").html(this.slides[this.currentSlide].parent)
+                            $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url).show();
+                        }
+                        $("#author").html(this.slides[this.currentSlide].author).attr('data-url', this.slides[this.currentSlide].author_url).show();
+                        $("#locked").toggle(this.slides[this.currentSlide].locked);
+                        if (this.slides[this.currentSlide].link_flair_text) {
+                            $("#flair").empty().append($('<span />', {
+                                style: "background-color: " + (this.slides[this.currentSlide].link_flair_background_color != "" ? this.slides[this.currentSlide].link_flair_background_color : "grey") +
+                                    ";color: " + (this.slides[this.currentSlide].link_flair_text_color == "light" ? "white" : "black"),
+                            }).html(this.slides[this.currentSlide].link_flair_text)).show();
+                        }
+                        $("#domain").html(this.slides[this.currentSlide].domain).show();
+                        $("#date").append($("<span />", {
+                            title: this.dateTime(this.slides[this.currentSlide].created)
+                        }).html(this.age(this.slides[this.currentSlide].created))).show();
+                        $("#score").html(this.slides[this.currentSlide].scor > 1000 ? Math.round(this.slides[this.currentSlide].scor / 100) / 10 + "K" : this.slides[this.currentSlide].score).show();
+                        $("#num_comments span").html(this.slides[this.currentSlide].num_comments);
+                        $("#num_comments").show();
+                        $("#nsfw").toggle(this.slides[this.currentSlide].over_18);
+                        if (this.slides[this.currentSlide].all_awardings.length > 0) {
+                            this.slides[this.currentSlide].all_awardings.forEach((award) => {
+                                $('<img />', { src: award }).appendTo("#all_awardings")
+
+                            });
+                            $("#all_awardings").show();
+                        }
+                        if (this.slides[this.currentSlide].total_awards_received > 0) {
+                            $("#total_awards_received span").html(this.slides[this.currentSlide].total_awards_received); $("#total_awards_received").show();
+                        }
+                    },
+                    clearPostInfo: function (partial = false) {
+                        $("#title").empty().hide();
+                        $("#subreddit").empty().hide().removeData();
+                        $("#parent span").empty(); $("#parent").hide().removeData();
+                        $("#author").empty().hide().removeData();
+                        $("#locked").hide();
+                        $("#flair").empty().hide();
+                        $("#domain").empty().hide();
+                        $("#date").empty().hide();
+                        $("#score").empty().hide();
+                        $("#num_comments span").empty(); $("#num_comments").hide();
+                        $("#nsfw").hide();
+                        $("#all_awardings").empty().hide();
+                        $("#total_awards_received span").empty(); $("#total_awards_received").hide();
+                    },
+                    displayPhoto: function () {
+                        this.iframe = new Image();
+                        this.iframe.src = this.slides[this.currentSlide].src;
+                        var _this = this;
+                        this.iframe.onerror = function () {
+                            $('#content').empty().append($("#error-icon").clone());
+                            setMessage("Load error");
+                            _this.unlock();
+                        };
+                        this.iframe.onload = function () {
+                            $('#content').empty();
+                            $(this).appendTo('#content').attr('id', "photo").addClass("photo");
+                            _this.resize();
+                            _this.unlock();
+                        };
+                    },
+                    displayVideo: function () {
+                        $('#content').empty().append($('<video />', {
+                            id: 'video',
+                            src: this.slides[this.currentSlide].src,
+                            type: 'video/mp4',
+                            poster: this.slides[this.currentSlide].preview,
+                            loop: ''
+                        }));
+                        this.iframe = $('video').first();
+                        this.resize();
+
+                        $(this.iframe).removeAttr("controls");
+                        $(this.iframe).prop("controls", false);
+
+                        $(this.iframe).prop("autoplay", true);
+
+                        $(this.iframe).removeAttr("muted");
+                        $(this.iframe).prop("muted", videoMuted);
+                        $(this.iframe).prop("preload", "none");
+
+                        var _this = this;
+                        var img = new Image();
+                        img.src = this.slides[this.currentSlide].preview;
+                        img.onload = function () {
+                            _this.unlock(false);
+                        };
+
+                        $(this.iframe).find('source').last().on('error', function (e) {
+                            $("#content").empty().append($("#error-icon").clone());
+                            _this.unlock();
+                        });
+                        $(this.iframe).on("play", function (e) {
+                                _this.unlock();
+                            })
+                            .on('loadstart', function (event) {
+                                $("#loader").show();
+                            })
+                            .on('loadeddata', function (event) {
+                                _this.iframe[0].play();
+                            })
+                            .on('seeking', function (event) {
+                                $("#loader").show();
+                            })
+                            .on('waiting', function (event) {
+                                $("#loader").show();
+                            })
+                            .on('canplay', function (event) {
+                                $("#loader").hide();
+                            });
+                    },
+                    show: function (whereTo) {
+                        if (!this.locked && this.slides.length > 0) {
+                            if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && this.slides[this.currentSlide].video_type == "tumblr") {
+                                this.iframe[0].pause();
+                                $(this.iframe).attr('src', '');
+                                $(this.iframe).find('source').last().attr('src', '');
+                                this.iframe[0].load();
+                            }
+                            var status;
+                            if (whereTo > 0) {
+                                status = this.prev();
+                            } else {
+                                status = this.next();
+                            }
+                            if (status) {
+                                this.display();
+                            }
+                        }
+                    },
+                    next: function () {
+                        if (this.currentSlide + 1 > this.slides.length - 5) {
+                            if (!this.noMore) this.update();
+                            this.updateLocked = true;
+                        }
+                        if (this.currentSlide < this.slides.length - 1) {
+                            this.currentSlide++;
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    },
+                    prev: function () {
+                        if (this.currentSlide > 0) {
+                            this.currentSlide--;
+                            return true;
+                        } else {
+                            return false;
+                        }
+                    },
+                    resize: function () {
+                        this.checkHidden();
+                        if (this.wasHidden) {
+                            return;
+                        }
+                        var elmt = window,
+                            prop = "inner";
+                        if (!("innerWidth" in window)) {
+                            elmt = document.documentElement || document.body;
+                            prop = "client";
+                        }
+                        var /*ww = elmt[prop + "Width"],
+                            wh = elmt[prop + "Height"],*/
+                            ww = Math.min(document.documentElement.clientWidth, window.innerWidth || 0),
+                            wh = Math.min(document.documentElement.clientHeight, window.innerHeight || 0),
+                            iw = $(this.iframe).width(),
+                            ih = $(this.iframe).height(),
+                            rw = wh / ww,
+                            ri = ih / iw,
+                            newWidth,
+                            newHeight;
+                        if (rw < ri) {
+                            newWidth = wh / ri;
+                            newHeight = wh;
+                        } else {
+                            newWidth = ww;
+                            newHeight = ww * ri;
+                        }
+                        properties = {
+                            width: newWidth + "px",
+                            height: newHeight + "px",
+                            top: (wh - newHeight) / 2,
+                            left: (ww - newWidth) / 2
+                        };
+                        $(this.iframe).css(properties);
+                    },
+                    age: function (timestamp) {
+                        var elapsed = new Date() - new Date(timestamp * 1000);
+
+                        if (elapsed < 60000) {return 'Now';}
+                        else if (elapsed < 3600000) {return Math.round(elapsed/60000) + ' m';}
+                        else if (elapsed < 86400000 ) {return Math.round(elapsed/3600000) + ' h';}
+                        else if (elapsed < 2592000000) {return Math.round(elapsed/86400000) + ' d';}
+                        else if (elapsed < 31536000000) {return Math.round(elapsed/2592000000) + ' mo';}
+                        else {return Math.round(elapsed/31536000000) + ' y';}
+                    },
+                    dateTime: function (timestamp) {
+                        var pubDate = new Date(timestamp * 1000);
+
+                        return pubDate.toLocaleDateString() + " " + pubDate.toLocaleTimeString();
+                    },
+                    seek: function (direction) {
+                        if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && !isNaN(this.iframe[0].duration)) {
+                            stepPosition = Math.round(this.iframe[0].duration * 0.05);
+                            if (stepPosition < 1) stepPosition = 1;
+                            var newPosition = this.iframe[0].currentTime + stepPosition * direction;
+                            if (newPosition < 0)
+                                newPosition = 0;
+                            else
+                            if (newPosition > this.iframe[0].duration)
+                                newPosition = this.iframe[0].duration - 1;
+                            this.iframe[0].currentTime = newPosition;
+                            setMessage(formatTime(newPosition) + " / " + formatTime(this.iframe[0].duration) + " (" + (direction > 0 ? "+" : "-") + stepPosition + ")", "timer");
+                        }
+                    },
+                    muteToggle: function () {
+                        if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && !isNaN(this.iframe[0].duration)) {
+                            videoMuted = !videoMuted;
+                            this.iframe[0].muted = videoMuted;
+
+                            $("#content svg.volume-icon").remove();
+                            $("#content").append($("#" + (this.iframe[0].muted ? "mute-icon" : "unmute-icon")).clone());
+
+                            setTimeout(function () {
+                                $("#content svg.volume-icon").remove();
+                            }, 800);
+                        }
+                    },
+                    test: function () {
+                        console.log("this.updateLocked: " + this.updateLocked);
+                        console.log("this.locked: " + this.locked);
+                        console.log("this.layoutType: " + this.layoutType);
+                        console.log("this.path: " + this.path);
+                        console.log("this.sort: " + this.sort);
+                        console.log("this.sortPeriod: " + this.sortPeriod);
+                        console.log("this.type: " + this.type);
+                        console.log("this.after: " + this.after);
+                        console.log("this.currentSlide: " + this.currentSlide);
+                        console.log("this.slides.length: " + this.slides.length);
+                        console.log("this.slides");
+                        console.log(this.slides);
+                        console.log(this.debug_request);
+                        console.log(this.debug_content);
+                    }
+                };
+
+                window.__igEmbedLoaded = function (loadedItem) {
+                    console.log("??");
+                };
+
+                var messageTimer;
+                function setMessage(text, id = "") {
+                    if (id == "") {
+                        $("#messages").append($("<span> </span>").html(text));
+                        setTimeout(function () {
+                            $("#messages span").first().remove();
+                        }, 5000);
+                    } else {
+                        if (!$('#messages span#' + id).length)
+                            $("#messages").append($("<span id=" + id + "> </span>").html(text));
+                        else
+                            $("#messages span#" + id).html(text);
+
+                        if (messageTimer) {
+                            clearTimeout(messageTimer);
+                            messageTimer = 0;
+                        }
+                        messageTimer = setTimeout(function () {
+                            $("#messages span#" + id).first().remove();
+                        }, 1000);
+                    }
+                }
+
+                function formatTime(seconds) {
+                    var hh = Math.floor(seconds / 3600);
+                    var mm = Math.floor(seconds % 3600 / 60);
+                    var ss = Math.round(seconds % 3600 % 60);
+                    return (hh > 0 ? (hh < 10 ? "0" : "") + hh + ":" : "") + (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
+                }
+
+                layouts.push({
+                    __proto__: layout$
+                });
+
+                currentLayout = layouts[0];
+
+                currentLayout.update();
+
+                $(document).one('auth', function (e) {
+                    if (typeof Cookies.get("after") !== 'undefined') {
+                        if (confirm('Do you want to restore dash?')) {
+                            $('#content').empty();
+                            currentLayout = {
+                                __proto__: layout$,
+                                layoutType: Cookies.get("layoutType"),
+                                path: Cookies.get("path"),
+                                sort: Cookies.get("sort"),
+                                sortPeriod: Cookies.get("sortPeriod"),
+                                type: Cookies.get("type"),
+                                after: Cookies.get("after")
+                            }
+                            if (Cookies.get("layoutType") == "feed") {
+                                layouts.splice(0, 0, currentLayout)
+                            } else {
+                                layouts.push(currentLayout);
+                            }
+                            currentLayout.update(true);
+                            $("#back").toggle(currentLayout.layoutType != "feed");
                         }
                     }
-                    if (data.hasOwnProperty('after')) this.after = data.after;
-                    //if (data.hasOwnProperty('debug_content')) this.debug_content = data.debug_content;
-                    //if (data.hasOwnProperty('debug_request')) this.debug_request = data.debug_request;
-                    break;
-                case 404:
-                    /*setMessage(data.msg);
-                    $("#loader").hide();
-                    if (data.hasOwnProperty('posts')) {
-                        if (data.posts.length == 0) this.noMore = true;
-                        this.slides = this.slides.concat(data.posts);
-                    }
-                    this.updateLocked = false;
-                    this.clearPostInfo();*/
-                    break;
-                case 511:
-                    $("#loader").hide();
-                    setMessage(data.msg);
-                    if (data.hasOwnProperty('auth_url')) {
-                        setTimeout(function(){
-                            window.location.href = data.auth_url;
-                        },1500)
-                    }
-                    break;
-                case 201:
-                case 202:
-                default:
-                    $("#loader").hide();
-                    setMessage(data.msg);
-                    break;
-            }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            setMessage("Update error!");
-            this.updateLocked = false;
-        },
-        lock: function() {
-            $("#loader").show();
-            this.locked = true;
-        },
-        unlock: function(loader = true) {
-            if (!this.updateLocked && loader) $("#loader").hide();
-            this.locked = false;
-        },
-        checkHidden: function() {
-            if ($('body').is(":visible")) {
-                this.wasHidden = false;
-            } else {
-                this.wasHidden = true;
-            }
-        },
-        display: function(){
-            this.lock();
-            if (this.slides.length == 0) {
-                this.unlock();
-                this.clearPostInfo(true);
-                return;
-            }
-            if (this.slides[this.currentSlide].type == "photo") {
-                this.displayPhoto();
-            } else {
-                this.displayVideo();
-            }
-            this.clearPostInfo();
-            this.displayPostInfo();
-            if (this.currentSlide-1 < 0 ) {
-                Cookies.set("after", "", { expires : 0.5 });
-            } else {
-                Cookies.set("after", this.slides[this.currentSlide-1].name, { expires : 0.5 });
-            }
-        },
-        displayPostInfo: function() {
-            switch (this.layoutType) {
-                case "feed":
-                    $("#layout").html("Front Page");
-                    break;
-                case "sr":
-                    $("#layout").html(this.slides[this.currentSlide].subreddit);
-                    break;
-                case "mr":
-                    $("#layout").html(this.path.split("/").at(-2));
-                    break;
-                case "u":
-                    $("#layout").html(this.slides[this.currentSlide].author);
-                    break;
-            }
-            $("#sort").html(this.sort);
-            $("#title").html(this.slides[this.currentSlide].title).show();
-            $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
-            if ( this.slides[this.currentSlide].parent != "") {
-                $("#parent span").html(this.slides[this.currentSlide].parent)
-                $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url).show();
-            }
-            $("#author").html(this.slides[this.currentSlide].author).attr('data-url', this.slides[this.currentSlide].author_url).show();
-            $("#locked").toggle(this.slides[this.currentSlide].locked);
-            if (this.slides[this.currentSlide].link_flair_text) {
-                $("#flair").empty().append($('<span />', {
-                    style: "background-color: " + (this.slides[this.currentSlide].link_flair_background_color != "" ? this.slides[this.currentSlide].link_flair_background_color : "grey") +
-                            ";color: " + (this.slides[this.currentSlide].link_flair_text_color == "light" ? "white" : "black"),
-                }).html(this.slides[this.currentSlide].link_flair_text)).show();
-            }
-            $("#domain").html(this.slides[this.currentSlide].domain).show();
-            $("#date").append($("<span />", {
-                title: this.dateTime(this.slides[this.currentSlide].created)
-                }).html(this.age(this.slides[this.currentSlide].created))).show();
-            $("#score").html(this.slides[this.currentSlide].scor > 1000 ? Math.round(this.slides[this.currentSlide].scor/100)/10 + "K" : this.slides[this.currentSlide].score).show();
-            $("#num_comments span").html(this.slides[this.currentSlide].num_comments); $("#num_comments").show();
-            $("#nsfw").toggle(this.slides[this.currentSlide].over_18);
-            if (this.slides[this.currentSlide].all_awardings.length > 0) {
-                this.slides[this.currentSlide].all_awardings.forEach((award) => {
-                    $('<img />', {src: award}).appendTo("#all_awardings")
+                    currentLayout.save();
+                    var ph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABGZJREFUeJztm01sVFUUx3/33MICB6QIxKWtoRihCiQukbjRxLjx25igMUZDYqLCQncCSwshasKGiGGB1cQ1MVU3tnWNtIWE1qgxEss4dUpqE43OPBf3PZwOM/M+7nv3vlp/yUk6ze0953/e67z77j1HUTzbQO+HYBjYCWoIgi3AZqASjvkdWAS1AMEsMAtqChoTQM1BjLmzF+QkyDRIEyTIaE2QKZATwB7fouKogBwBuWwhOM5mQA7z751TCvpBjoMsFCi83WogxzD/Rt5QoF8AmXcovFMi3gDEtfhB0JMehbeZngAGHGnXT4D85l/0LXYD9HNFKheQUyUQGmcnAZW3+PUgH5dAXFI7D6zLUby6UAJRKU1dMLHboUDO+ReT2T6B3k8I3Vu/nAIOZUjcNeAzCH4ENQj0xYyvQzAOahK4AsEPwM+gGphnfdbH3G5QFQi+yPC3+plsWdffAP0tEw2AzHUfqx+jd4I2gT4IMpv9TtBPp1U/CLKYzRn7Osy3C6TRMm4J9Muk+7beYLH2WDSakqEsHNV7TPt5OOYnYHcK4a0MW9wFkyRLuH7J4ktnpvu8cgykCtydUXw0T9UiCS/Gzd4Pct0iAVPdp9YHzSrSFvneIr55er9AyXGLyWMSwG324tkC8rdljEe7TV7B/pW2VwI6sQn0K6C+BPkOZAnkKsg50I+ycjW3HuS8ZXwBSI3O+wlyJIfJ0yTgQZBrMfNVQUZBTocJso0vssOdEpDHTk7SBBwA+StHQWnt5pd1tMLaB9yb4urZ0A/yKfGrwyLZRbjHGCZAnnfnW14H7nTnrxtGc3QHPOzIqwZec+QrjkfAJGAb2VdmaXkg9FcGhoGtYg4t8t9B6YwccOMnEQr0foHgPodO73HoKwHBsAA73DlUlu8BuTMk5qzOFYHXg4xbUTsEgu0OPW5w6CsBwXbB7Tmb9SZlzmx0nYCysdH5mVrZEExxwlpl6f8EgKr6jsIfqiphTc4aJZgVYM53GB6ZE1ONtVZR0wKNr4Gm71A8EEBjQoAF4LLvaDwwBdSihdCYz0g8MQY3t8Saoz4j8YPRHN0BF4Ee53r/Oa4Al4AVhQcf+YnFC2eiH1oS0DzDKi1MTskCNM9GH1rvgGXgtPt4nPM+Le8/ba/DzfeA627jcco8ND9o/UX7fsAiqLcdBuQY9RZwI3aUqb3NfPTcjT6QP/wdiOpxUpx/DIDUszlibxf9D3k8Da4DdyUVH6KfyujsYgdnOzGFD76u/pMpxUfIiYxOl0GNgXwI6iuQPz1e/ZGM4oHVXyo7CvbNFOtWcbF0bhXjfSBn/YtKbLmWy0coTCucb3FxNkKxx/36ccrbMvNsgcJXMFCypqlx0j/nrSlD29wvoF8F921zrWwGOYrp4XMl/FeQd4DbfQpvpwLyJqa9tSjh05hGyTzqjgtlD8gIyCVWNkqktQbItyDvAvcXEaiL6rCtLe3zQ2H7/B2YtproSi4DdVA1COaAq6BmoDGO2bYvjH8AJnU6lSYCwysAAAAASUVORK5CYII="
+                    $.ajax({
+                        dataType: "json",
+                        url: "./",
+                        async: true,
+                        data: { action: "mrs" },
+                        beforeSend: function (data) { $("#loader").show(); },
+                        success: function (data) {
+                            $("#loader").hide();
 
+                            $.each(data.m, function (i, obj) {
+                                $("ul#m").append(
+                                    $("<li />", { 'data-url': obj.url }).append(
+                                        $('<img />', {
+                                            src: obj.icon
+                                        }), $('<span />').addClass('title').html(obj.multireddit)).addClass('multireddit'));
+                            });
+                        }
+                    });
+                    $.ajax({
+                        dataType: "json",
+                        url: "./",
+                        async: true,
+                        data: { action: "srs" },
+                        beforeSend: function (data) { $("#loader").show(); },
+                        success: function (data) {
+                            $("#loader").hide();
+
+                            $.each(data.s, function (i, obj) {
+                                $("ul#s").append(
+                                    $("<li />", { 'data-url': obj.url }).append(
+                                        $('<span />').addClass('icon-back').append(
+                                            $('<img />', {
+                                                src: obj.icon != '' ? obj.icon : ph
+                                            }).toggleClass("random" + (Math.floor(Math.random() * (8)) + 1), obj.icon == '')
+                                            .on("error", function () {
+                                                $(this).attr("src", ph).addClass("random" + (Math.floor(Math.random() * (8)) + 1));
+                                            })), $('<span />').addClass('title').html(obj.subreddit)).addClass('subreddit'));
+                            });
+                        }
+                    });
                 });
-                $("#all_awardings").show();
-            }
-            if (this.slides[this.currentSlide].total_awards_received > 0) {
-                $("#total_awards_received span").html(this.slides[this.currentSlide].total_awards_received); $("#total_awards_received").show();
-            }
-        },
-        clearPostInfo: function(partial = false) {
-            $("#title").empty().hide();
-            $("#subreddit").empty().hide().removeData();
-            $("#parent span").empty(); $("#parent").hide().removeData();
-            $("#author").empty().hide().removeData();
-            $("#locked").hide();
-            $("#flair").empty().hide();
-            $("#domain").empty().hide();
-            $("#date").empty().hide();
-            $("#score").empty().hide();
-            $("#num_comments span").empty(); $("#num_comments").hide();
-            $("#nsfw").hide();
-            $("#all_awardings").empty().hide();
-            $("#total_awards_received span").empty(); $("#total_awards_received").hide();
-        },
-        displayPhoto: function() {
-            this.iframe = new Image();
-            this.iframe.src = this.slides[this.currentSlide].src;
-            var _this = this;
-            this.iframe.onerror = function() {
-                $('#content').empty().append($("#error-icon").clone());
-                setMessage("Load error");
-                _this.unlock();
-            };
-            this.iframe.onload = function() {
-                $('#content').empty();
-                $(this).appendTo('#content').attr('id',"photo").addClass("photo");
-                _this.resize();
-                _this.unlock();
-            };
-        },
-        displayVideo: function() {
-            $('#content').empty().append($('<video />', {
-                id: 'video',
-                src: this.slides[this.currentSlide].src,
-                type: 'video/mp4',
-                poster: this.slides[this.currentSlide].preview,
-                loop: ''
-            }));
-            this.iframe = $('video').first();
-            this.resize();
 
-            $(this.iframe).removeAttr("controls");
-            $(this.iframe).prop("controls",false);
+                $(window).resize(function (e) {
+                    currentLayout.resize()
+                });
 
-            $(this.iframe).prop("autoplay",true);
-
-            $(this.iframe).removeAttr("muted");
-            $(this.iframe).prop("muted",videoMuted);
-            $(this.iframe).prop("preload","none");
-
-            var _this = this;
-            var img = new Image();
-            img.src = this.slides[this.currentSlide].preview;
-            img.onload = function(){
-                _this.unlock(false);
-            };
-
-
-
-            $(this.iframe).find('source').last().on('error', function(e) {
-                $("#content").empty().append($("#error-icon").clone());
-                _this.unlock();
-            });
-            $(this.iframe).on("play",function (e){
-                _this.unlock();
-            })
-            .on('loadstart', function (event) {
-                $("#loader").show();
-            })
-            .on('loadeddata', function (event) {
-                _this.iframe[0].play();
-            })
-            .on('seeking', function (event) {
-                $("#loader").show();
-            })
-            .on('waiting', function (event) {
-                $("#loader").show();
-            })
-            .on('canplay', function (event) {
-                $("#loader").hide();
-            });
-        },
-        show: function(whereTo) {
-            if (!this.locked && this.slides.length > 0) {
-                if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && this.slides[this.currentSlide].video_type == "tumblr") {
-                    this.iframe[0].pause();
-                    $(this.iframe).attr('src','');
-                    $(this.iframe).find('source').last().attr('src','');
-                    this.iframe[0].load();
-                    }
-                var status;
-                if (whereTo > 0) {
-                    status = this.prev();
-                } else {
-                    status = this.next();
-                }
-                if (status) {
-                    this.display();
-                }
-            }
-        },
-        next: function(){
-            if (this.currentSlide+1 > this.slides.length-5) {
-                if (!this.noMore) this.update();
-                this.updateLocked = true;
-            }
-            if (this.currentSlide < this.slides.length-1) {
-                this.currentSlide++;
-                return true;
-            } else {
-                return false;
-            }
-        },
-        prev: function(){
-            if (this.currentSlide > 0) {
-                this.currentSlide--;
-                return true;
-            } else {
-                return false;
-            }
-        },
-        resize: function(){
-            this.checkHidden();
-            if (this.wasHidden) {
-                return;
-            }
-            var elmt = window, prop = "inner";
-            if (!("innerWidth" in window)) {
-                elmt = document.documentElement || document.body;
-                prop = "client";
-            }
-            var /*ww = elmt[prop + "Width"],
-                wh = elmt[prop + "Height"],*/
-                ww = Math.min(document.documentElement.clientWidth,window.innerWidth||0),
-                wh = Math.min(document.documentElement.clientHeight,window.innerHeight||0),
-                iw = $(this.iframe).width(),
-                ih = $(this.iframe).height(),
-                rw = wh / ww,
-                ri = ih / iw,
-                newWidth,
-                newHeight;
-            if (rw < ri) {
-               newWidth = wh / ri;
-               newHeight = wh;
-            } else {
-                newWidth = ww;
-                newHeight = ww * ri;
-            }
-            properties = {
-                width: newWidth + "px",
-                height: newHeight + "px",
-                top: (wh - newHeight) / 2,
-                left: (ww - newWidth) / 2
-            };
-            $(this.iframe).css(properties);
-        },
-        age: function(timestamp) {
-            var elapsed = new Date() - new Date(timestamp*1000);
-
-            if (elapsed < 60000) {return 'Now';}
-            else if (elapsed < 3600000) {return Math.round(elapsed/60000) + ' m';}
-            else if (elapsed < 86400000 ) {return Math.round(elapsed/3600000) + ' h';}
-            else if (elapsed < 2592000000) {return Math.round(elapsed/86400000) + ' d';}
-            else if (elapsed < 31536000000) {return Math.round(elapsed/2592000000) + ' mo';}
-            else {return Math.round(elapsed/31536000000) + ' y';}
-        },
-        dateTime: function(timestamp) {
-            var pubDate = new Date(timestamp*1000);
-
-            return pubDate.toLocaleDateString() + " " + pubDate.toLocaleTimeString();
-        },
-        seek: function(direction) {
-            if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && !isNaN(this.iframe[0].duration)) {
-                stepPosition = Math.round(this.iframe[0].duration * 0.05);
-                if (stepPosition < 1) stepPosition = 1;
-                var newPosition = this.iframe[0].currentTime + stepPosition*direction;
-                if (newPosition < 0)
-                    newPosition = 0;
-                else
-                    if (newPosition > this.iframe[0].duration)
-                        newPosition = this.iframe[0].duration - 1;
-                this.iframe[0].currentTime = newPosition;
-                setMessage(formatTime(newPosition) + " / " + formatTime(this.iframe[0].duration) + " (" + ( direction>0 ? "+" : "-" ) + stepPosition + ")", "timer");
-            }
-        },
-        muteToggle: function() {
-            if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && !isNaN(this.iframe[0].duration)) {
-                videoMuted = !videoMuted;
-                this.iframe[0].muted = videoMuted;
-
-                $("#content svg.volume-icon").remove();
-                $("#content").append($("#" + (this.iframe[0].muted ? "mute-icon" : "unmute-icon")).clone());
-
-                setTimeout(function() {
-                    $("#content svg.volume-icon").remove();
-                }, 800);
-            }
-        },
-        test: function(){
-            console.log("this.updateLocked: " + this.updateLocked);
-            console.log("this.locked: " + this.locked);
-            console.log("this.layoutType: " + this.layoutType);
-            console.log("this.path: " + this.path);
-            console.log("this.sort: " + this.sort);
-            console.log("this.sortPeriod: " + this.sortPeriod);
-            console.log("this.type: " + this.type);
-            console.log("this.after: " + this.after);
-            console.log("this.currentSlide: " + this.currentSlide);
-            console.log("this.slides.length: " + this.slides.length);
-            console.log("this.slides");
-            console.log(this.slides);
-            console.log(this.debug_request);
-            console.log(this.debug_content);
-        }
-    };
-
-    window.__igEmbedLoaded = function( loadedItem ) {
-        console.log("??");
-    };
-
-    var messageTimer;
-    function setMessage (text, id="") {
-         if (id == ""){
-            $("#messages").append($("<span> </span>").html(text));
-            setTimeout(function() {
-                $("#messages span").first().remove();
-            }, 5000);
-        } else {
-            if(!$('#messages span#' + id).length)
-                $("#messages").append($("<span id=" + id + "> </span>").html(text));
-            else
-                $("#messages span#" + id).html(text);
-
-            if (messageTimer) {
-                clearTimeout(messageTimer);
-                messageTimer = 0;
-            }
-            messageTimer = setTimeout(function() {
-                $("#messages span#" + id).first().remove();
-                }, 1000);
-        }
-    }
-
-    function formatTime (seconds) {
-        var hh = Math.floor(seconds / 3600);
-        var mm = Math.floor(seconds%3600 / 60);
-        var ss = Math.round(seconds%3600 % 60);
-        return (hh>0 ? (hh<10 ? "0" : "") + hh + ":" : "") + (mm<10 ? "0" : "") + mm + ":" + (ss<10 ? "0" : "") + ss;
-    }
-
-    layouts.push({
-        __proto__: layout$
-    });
-
-    currentLayout = layouts[0];
-
-    currentLayout.update();
-
-    $(document).one('auth',function (e){
-        if (typeof Cookies.get("after") !== 'undefined') {
-            if (confirm('Do you want to restore dash?')) {
-                $('#content').empty();
-                currentLayout = {
+                $("#content").on('click', function (e) {
+                    $(".header").toggle();
+                    $("#sidebar").hide();
+                });
+                $(document).on('click', '.subreddit, .multireddit, #author', function (e) {
+                    layouts.push({
                         __proto__: layout$,
-                        layoutType: Cookies.get("layoutType"),
-                        path: Cookies.get("path"),
-                        sort: Cookies.get("sort"),
-                        sortPeriod: Cookies.get("sortPeriod"),
-                        type: Cookies.get("type"),
-                        after: Cookies.get("after")
-                    }
-                if (Cookies.get("layoutType") == "feed") {
-                    layouts.splice(0, 0, currentLayout)
-                } else {
-                    layouts.push(currentLayout);
-                }
-                currentLayout.update(true);
-                $("#back").toggle(currentLayout.layoutType != "feed");
-            }
-        }
-        currentLayout.save();
-        var ph="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABGZJREFUeJztm01sVFUUx3/33MICB6QIxKWtoRihCiQukbjRxLjx25igMUZDYqLCQncCSwshasKGiGGB1cQ1MVU3tnWNtIWE1qgxEss4dUpqE43OPBf3PZwOM/M+7nv3vlp/yUk6ze0953/e67z77j1HUTzbQO+HYBjYCWoIgi3AZqASjvkdWAS1AMEsMAtqChoTQM1BjLmzF+QkyDRIEyTIaE2QKZATwB7fouKogBwBuWwhOM5mQA7z751TCvpBjoMsFCi83WogxzD/Rt5QoF8AmXcovFMi3gDEtfhB0JMehbeZngAGHGnXT4D85l/0LXYD9HNFKheQUyUQGmcnAZW3+PUgH5dAXFI7D6zLUby6UAJRKU1dMLHboUDO+ReT2T6B3k8I3Vu/nAIOZUjcNeAzCH4ENQj0xYyvQzAOahK4AsEPwM+gGphnfdbH3G5QFQi+yPC3+plsWdffAP0tEw2AzHUfqx+jd4I2gT4IMpv9TtBPp1U/CLKYzRn7Osy3C6TRMm4J9Muk+7beYLH2WDSakqEsHNV7TPt5OOYnYHcK4a0MW9wFkyRLuH7J4ktnpvu8cgykCtydUXw0T9UiCS/Gzd4Pct0iAVPdp9YHzSrSFvneIr55er9AyXGLyWMSwG324tkC8rdljEe7TV7B/pW2VwI6sQn0K6C+BPkOZAnkKsg50I+ycjW3HuS8ZXwBSI3O+wlyJIfJ0yTgQZBrMfNVQUZBTocJso0vssOdEpDHTk7SBBwA+StHQWnt5pd1tMLaB9yb4urZ0A/yKfGrwyLZRbjHGCZAnnfnW14H7nTnrxtGc3QHPOzIqwZec+QrjkfAJGAb2VdmaXkg9FcGhoGtYg4t8t9B6YwccOMnEQr0foHgPodO73HoKwHBsAA73DlUlu8BuTMk5qzOFYHXg4xbUTsEgu0OPW5w6CsBwXbB7Tmb9SZlzmx0nYCysdH5mVrZEExxwlpl6f8EgKr6jsIfqiphTc4aJZgVYM53GB6ZE1ONtVZR0wKNr4Gm71A8EEBjQoAF4LLvaDwwBdSihdCYz0g8MQY3t8Saoz4j8YPRHN0BF4Ee53r/Oa4Al4AVhQcf+YnFC2eiH1oS0DzDKi1MTskCNM9GH1rvgGXgtPt4nPM+Le8/ba/DzfeA627jcco8ND9o/UX7fsAiqLcdBuQY9RZwI3aUqb3NfPTcjT6QP/wdiOpxUpx/DIDUszlibxf9D3k8Da4DdyUVH6KfyujsYgdnOzGFD76u/pMpxUfIiYxOl0GNgXwI6iuQPz1e/ZGM4oHVXyo7CvbNFOtWcbF0bhXjfSBn/YtKbLmWy0coTCucb3FxNkKxx/36ccrbMvNsgcJXMFCypqlx0j/nrSlD29wvoF8F921zrWwGOYrp4XMl/FeQd4DbfQpvpwLyJqa9tSjh05hGyTzqjgtlD8gIyCVWNkqktQbItyDvAvcXEaiL6rCtLe3zQ2H7/B2YtproSi4DdVA1COaAq6BmoDGO2bYvjH8AJnU6lSYCwysAAAAASUVORK5CYII="
-        $.ajax({
-            dataType: "json",
-            url: "./",
-            async: true,
-            data: {action: "mrs"},
-            beforeSend: function (data) {$("#loader").show();},
-            success: function (data) {
-                $("#loader").hide();
-
-                $.each(data.m, function(i, obj) {
-                    $("ul#m").append(
-                        $("<li />", {'data-url': obj.url}).append(
-                                $('<img />', {
-                                    src: obj.icon
-                                }), $('<span />').addClass('title').html(obj.multireddit)).addClass('multireddit'));
+                        layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
+                        path: $(this).data("url")
+                    });
+                    currentLayout = layouts[layouts.length - 1];
+                    currentLayout.update();
+                    currentLayout.save();
+                    $("#sidebar").hide();
+                    $("#back").show();
+                    if (layouts.length > 2) $("#home").show();
                 });
-            }
-        });
-        $.ajax({
-            dataType: "json",
-            url: "./",
-            async: true,
-            data: {action: "srs"},
-            beforeSend: function (data) {$("#loader").show();},
-            success: function (data) {
-                $("#loader").hide();
-
-                $.each(data.s, function(i, obj) {
-                    $("ul#s").append(
-                        $("<li />", {'data-url': obj.url}).append(
-                                $('<span />').addClass('icon-back').append(
-                                    $('<img />', {
-                                        src: obj.icon != '' ? obj.icon : ph
-                                    }).toggleClass("random" + (Math.floor(Math.random() * (8)) + 1), obj.icon == '')
-                                      .on("error", function () {
-                                          $(this).attr("src", ph).addClass("random" + (Math.floor(Math.random() * (8)) + 1));
-                                      })), $('<span />').addClass('title').html(obj.subreddit)).addClass('subreddit'));
-                });
-            }
-        });
-    });
-
-    $(window).resize(function (e){
-        currentLayout.resize()
-    });
-
-    $("#content").on('click',function (e){
-        $(".header").toggle();
-        $("#sidebar").hide();
-    });
-    $(document).on('click', '.subreddit, .multireddit, #author', function (e){
-        layouts.push({
-        __proto__: layout$,
-            layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
-            path: $(this).data("url")
-        });
-        currentLayout = layouts[layouts.length-1];
-        currentLayout.update();
-        currentLayout.save();
-        $("#sidebar").hide();
-        $("#back").show();
-        if (layouts.length > 2) $("#home").show();
-    });
-    $("#home, #back, #sidebar-home").on('click',function (e){
-        if (layouts.length <= 1) return;
-        switch(this.id) {
-            case 'home':
-            case 'sidebar-home':
-                while (layouts.length > 1) {
-                    layouts.pop();
-                }
-            break;
-            case 'back':
-                layouts.pop();
-            break;
-        }
-
-        currentLayout = layouts[layouts.length-1];
-        $("#type").val(currentLayout.type);
-        currentLayout.save();
-        currentLayout.display();
-        if (layouts.length < 3) $("#home").hide();
-        if (layouts.length == 1) $("#back").hide();
-    });
-    $("#layout").on('click',function (e){
-         $("#sidebar").toggle();
-    });
-    $("#sort").on('click',function (e){
-        $("#sort-menu").toggle();
-        $("#sort-order").show();
-        $("#sort-period").hide();
-    });
-    $("#sort-order li").on('click',function (e){
-        currentLayout.sort=this.id.split("-")[1];
-        currentLayout.after="";
-        currentLayout.currentSlide=0;
-        currentLayout.slides=[];
-         switch(this.id) {
-            case "sort-best":
-            case "sort-hot":
-            case "sort-new":
-            case "sort-rising":
-                currentLayout.update();
-                currentLayout.save();
-                break;
-            case "sort-controversial":
-            case "sort-top":
-                $("#sort-order").hide();
-                $("#sort-period").show();
-                break;
-         }
-         $("#sort-menu").hide();
-    });
-    $("#sort-period li").on('click',function (e){
-        currentLayout.sortPeriod=this.id.split("-")[1];
-
-    });
-    $("#close").on('click',function (e){
-        $("#sidebar").hide();
-    });
-    $("#fullscreen").on('click',function (e){
-        var requestFullScreen = document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullScreen || document.documentElement.msRequestFullscreen;
-        var cancelFullScreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
-        if(!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement)
-            requestFullScreen.call(document.documentElement);
-        else
-            cancelFullScreen.call(document);
-    });
-    var timer;
-    var hided = false;
-    $(window).on("mousemove",function () {
-        if (!hided) {
-            if (timer) {
-                clearTimeout(timer);
-                timer = 0;
-            }
-        } else {
-            $('html').css({cursor: ''});
-            hided = false;
-        }
-        timer = setTimeout(function () {
-            $('html').css({cursor: 'none'});
-            hided = true;
-        }, 2000);
-    });
-    var stealthMode = !( navigator.userAgent.match(/Android/i)    ||
-                         navigator.userAgent.match(/webOS/i)      ||
-                         navigator.userAgent.match(/iPhone/i)     ||
-                         navigator.userAgent.match(/iPad/i)       ||
-                         navigator.userAgent.match(/iPod/i)       ||
-                         navigator.userAgent.match(/BlackBerry/i) ||
-                         navigator.userAgent.match(/Windows Phone/i));
-    var videoMuted = true;
-    $(window).on('mouseleave blur focusout', function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (stealthMode) {
-            $('body').hide();
-        }
-    });
-    var keyHidden = false;
-    $(window).on('mouseenter mouseover', function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-        if (stealthMode && !keyHidden) {
-            $('body').show();
-            if (currentLayout.wasHidden) {
-                currentLayout.resize();
-            }
-        }
-    });
-
-    $("#search").keyup(function(){
-        $('.sidebar-container li.multireddit, .sidebar-container li.subreddit').each((idx, li) => {
-            $(li).toggle($(li).text().indexOf($(this).val()) !== -1);
-        });
-    });
-
-    // keybindings
-    var enabled = true;
-    $(document).on('keydown',function(e){
-        var code = (e.keyCode ? e.keyCode : e.which);
-        if (e.altKey && code == 81) { // Alt + 'q'
-            enabled = !enabled;
-            setMessage("Hot keys " + (enabled ? "enabled" : "disabled"));
-            return;
-        }
-
-        if (enabled && !$("input").is(":focus")) switch (code){
-            case 37:  // left
-            case 65:  // 'a'
-                currentLayout.show(1);
-                break;
-            case 39: // right
-            case 68: // 'd'
-                currentLayout.show(-1);
-                break;
-            case 81: // 'q'
-                // home
-                $("#home").click();
-                break;
-            case 87: // 'w'
-                // back
-                $("#back").click();
-                break;
-            case 69: // 'e'
-                // blog
-                $("#blog-name").click();
-                break;
-            case 83: // 's'
-                // reblogged from
-                $("#reblogged-from").click();
-                break;
-            case 88: // 'x'
-                // source
-                $("#source").click();
-                break;
-            case 70: // 'f'
-                // follow
-                $("#follow").click();
-                break;
-            case 78: // 'n'
-                // photo
-                $("#type").val("photo").trigger('change');
-                break;
-            case 66: // 'b'
-                // both
-                $("#type").val("all").trigger('change');
-            case 86: // 'v'
-                // video
-                $("#type").val("video").trigger('change');
-                break;
-            case 84: // 't'
-                // open post
-                $("#open-post").click();
-                break;
-            case 76: // 'l'
-                // like post
-                $("#like-post").click();
-                break;
-            case 32: // space
-                $("#content").click();
-                break;
-            case 67: // 'c'
-                currentLayout.seek(1);
-                break;
-            case 90: // 'z'
-                currentLayout.seek(-1);
-                break;
-            case 220: // '\'
-                stealthMode = !stealthMode;
-                videoMuted = stealthMode;
-                setMessage("Stealth mode " + (stealthMode ? "enabled" : "disabled"));
-                break;
-            case 192: // '`'
-                if (stealthMode) {
-                    $('body').toggle();
-                    keyHidden = $('body').is( ":hidden" );
-                    if (currentLayout.wasHidden) {
-                        currentLayout.resize();
+                $("#home, #back, #sidebar-home").on('click', function (e) {
+                    if (layouts.length <= 1) return;
+                    switch (this.id) {
+                        case 'home':
+                        case 'sidebar-home':
+                            while (layouts.length > 1) {
+                                layouts.pop();
+                            }
+                            break;
+                        case 'back':
+                            layouts.pop();
+                            break;
                     }
-                }
-                break;
-            case 77: // 'm'
-                currentLayout.muteToggle();
-                break;
-            case 73: // 'i'
-                currentLayout.test();
-                break;
-            default:
-                break;
-        }
-    });
-    // mouse wheel
-    $("#content").on('mousewheel DOMMouseScroll',function (e){
-        e.stopPropagation();
-        currentLayout.show(parseInt(e.originalEvent.wheelDelta || - e.originalEvent.detail));
-    });
-    // touch
-    var xDown,yDown,xUp,yUp = null;
-    var xDiffPrev = 0;
-    var touchOff = false;
-    var mouseButtonDown = false;
-    $("#content").bind('touchstart', function (ev) {
-        ev.stopPropagation();
-        if ( touchOff ) {return;}
-        var e = ev.originalEvent;
-        xDown = e.touches[0].clientX;
-        yDown = e.touches[0].clientY;
-    });
-    $("#content").mousedown(function(ev) {
-        var e = ev.originalEvent;
-        if (e.which ==  2) {
-            mouseButtonDown = true;
-            xDown = e.clientX;
-            yDown = e.clientY;
-        }
-    });
-    $("#content").bind('touchmove', function (ev) {
-        ev.stopPropagation();
-        if ( touchOff ) {return;}
-        var e = ev.originalEvent;
-        if ( ! xDown || ! yDown ) {return;}
-        xUp = e.touches[0].clientX;
-        yUp = e.touches[0].clientY;
-        var xDiff = xDown - xUp;
-        var yDiff = yDown - yUp;
-        var direction = 0;
-        if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
-            if ( xDiff > 0 ) {
-                direction = 1;
-            } else if (xDiff < 0) {
-                direction = -1;
-            }
-            if ( Math.abs(xDiff - xDiffPrev) > 30 ) {
-                currentLayout.seek(-direction);
-                xDiffPrev = xDiff;
-            }
-        }/* else {
-            if ( yDiff > 25 ) {
-                currentLayout.show(-1);
-            } else if (yDiff < -25) {
-                currentLayout.show(1);
-            }
-        }*/
-    });
-    $("#content").mousemove(function(ev) {
-        if (!mouseButtonDown) {return;}
-        if ( ! xDown || ! yDown ) {return;}
-        var e = ev.originalEvent;
-        xUp = e.clientX;
-        yUp = e.clientY;
-        var xDiff = xDown - xUp;
-        var yDiff = yDown - yUp;
-        var direction = 0;
-        if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
-            if ( xDiff > 0 ) {
-                direction = 1;
-            } else if (xDiff < 0) {
-                direction = -1;
-            }
-            if ( Math.abs(xDiff - xDiffPrev) > 30 ) {
-                currentLayout.seek(-direction);
-                xDiffPrev = xDiff;
-            }
-        }
-    });
-    $("#content").bind('touchend', function (ev) {
-        ev.stopPropagation();
-        if ( touchOff ) {return;}
-        if ( typeof xUp == 'undefined' || ! xUp || ! yUp ) {return;}
-        var xDiff = xDown - xUp;
-        var yDiff = yDown - yUp;
-        if ( Math.abs( xDiff ) > Math.abs( yDiff ) ) {
-            /*if ( xDiff > 25 ) {
-                //currentLayout.show(-1);
-            } else if (xDiff < -25) {
-                //currentLayout.show(1);
-            }*/
-        } else {
-            if ( yDiff > 25 ) {
-                currentLayout.show(-1);
-            } else if (yDiff < -25) {
-                currentLayout.show(1);
-            }
-        }
-        xDown = null;
-        yDown = null;
-        xUp = null;
-        yUp = null;
-    });
-    $("#content").mouseup(function(ev) {
-        var e = ev.originalEvent;
-        if (e.which ==  2) {
-            mouseButtonDown = false;
-            if ( typeof xUp == 'undefined' || ! xUp || ! yUp ) {return;}
-            xDown = null;
-            yDown = null;
-            xUp = null;
-            yUp = null;
-        }
-    });
-  });
+
+                    currentLayout = layouts[layouts.length - 1];
+                    $("#type").val(currentLayout.type);
+                    currentLayout.save();
+                    currentLayout.display();
+                    if (layouts.length < 3) $("#home").hide();
+                    if (layouts.length == 1) $("#back").hide();
+                });
+                $("#layout").on('click', function (e) {
+                    $("#sidebar").toggle();
+                });
+                $("#sort").on('click', function (e) {
+                    $("#sort-menu").toggle();
+                    $("#sort-order").show();
+                    $("#sort-period").hide();
+                });
+                $("#sort-order li").on('click', function (e) {
+                    currentLayout.sort = this.id.split("-")[1];
+                    currentLayout.after = "";
+                    currentLayout.currentSlide = 0;
+                    currentLayout.slides = [];
+                    switch (this.id) {
+                        case "sort-best":
+                        case "sort-hot":
+                        case "sort-new":
+                        case "sort-rising":
+                            currentLayout.update();
+                            currentLayout.save();
+                            break;
+                        case "sort-controversial":
+                        case "sort-top":
+                            $("#sort-order").hide();
+                            $("#sort-period").show();
+                            break;
+                    }
+                    $("#sort-menu").hide();
+                });
+                $("#sort-period li").on('click', function (e) {
+                    currentLayout.sortPeriod = this.id.split("-")[1];
+
+                });
+                $("#close").on('click', function (e) {
+                    $("#sidebar").hide();
+                });
+                $("#fullscreen").on('click', function (e) {
+                    var requestFullScreen = document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullScreen || document.documentElement.msRequestFullscreen;
+                    var cancelFullScreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                    if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement)
+                        requestFullScreen.call(document.documentElement);
+                    else
+                        cancelFullScreen.call(document);
+                });
+                var timer;
+                var hided = false;
+                $(window).on("mousemove", function () {
+                    if (!hided) {
+                        if (timer) {
+                            clearTimeout(timer);
+                            timer = 0;
+                        }
+                    } else {
+                        $('html').css({ cursor: '' });
+                        hided = false;
+                    }
+                    timer = setTimeout(function () {
+                        $('html').css({ cursor: 'none' });
+                        hided = true;
+                    }, 2000);
+                });
+                var stealthMode = !(navigator.userAgent.match(/Android/i) ||
+                    navigator.userAgent.match(/webOS/i) ||
+                    navigator.userAgent.match(/iPhone/i) ||
+                    navigator.userAgent.match(/iPad/i) ||
+                    navigator.userAgent.match(/iPod/i) ||
+                    navigator.userAgent.match(/BlackBerry/i) ||
+                    navigator.userAgent.match(/Windows Phone/i));
+                var videoMuted = true;
+                $(window).on('mouseleave blur focusout', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (stealthMode) {
+                        $('body').hide();
+                    }
+                });
+                var keyHidden = false;
+                $(window).on('mouseenter mouseover', function (e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (stealthMode && !keyHidden) {
+                        $('body').show();
+                        if (currentLayout.wasHidden) {
+                            currentLayout.resize();
+                        }
+                    }
+                });
+
+                $("#search").keyup(function () {
+                    $('.sidebar-container li.multireddit, .sidebar-container li.subreddit').each((idx, li) => {
+                        $(li).toggle($(li).text().indexOf($(this).val()) !== -1);
+                    });
+                });
+
+                // keybindings
+                var enabled = true;
+                $(document).on('keydown', function (e) {
+                    var code = (e.keyCode ? e.keyCode : e.which);
+                    if (e.altKey && code == 81) { // Alt + 'q'
+                        enabled = !enabled;
+                        setMessage("Hot keys " + (enabled ? "enabled" : "disabled"));
+                        return;
+                    }
+
+                    if (enabled && !$("input").is(":focus")) switch (code) {
+                        case 37: // left
+                        case 65: // 'a'
+                            currentLayout.show(1);
+                            break;
+                        case 39: // right
+                        case 68: // 'd'
+                            currentLayout.show(-1);
+                            break;
+                        case 81: // 'q'
+                            // home
+                            $("#home").click();
+                            break;
+                        case 87: // 'w'
+                            // back
+                            $("#back").click();
+                            break;
+                        case 69: // 'e'
+                            // blog
+                            $("#blog-name").click();
+                            break;
+                        case 83: // 's'
+                            // reblogged from
+                            $("#reblogged-from").click();
+                            break;
+                        case 88: // 'x'
+                            // source
+                            $("#source").click();
+                            break;
+                        case 70: // 'f'
+                            // follow
+                            $("#follow").click();
+                            break;
+                        case 78: // 'n'
+                            // photo
+                            $("#type").val("photo").trigger('change');
+                            break;
+                        case 66: // 'b'
+                            // both
+                            $("#type").val("all").trigger('change');
+                        case 86: // 'v'
+                            // video
+                            $("#type").val("video").trigger('change');
+                            break;
+                        case 84: // 't'
+                            // open post
+                            $("#open-post").click();
+                            break;
+                        case 76: // 'l'
+                            // like post
+                            $("#like-post").click();
+                            break;
+                        case 32: // space
+                            $("#content").click();
+                            break;
+                        case 67: // 'c'
+                            currentLayout.seek(1);
+                            break;
+                        case 90: // 'z'
+                            currentLayout.seek(-1);
+                            break;
+                        case 220: // '\'
+                            stealthMode = !stealthMode;
+                            videoMuted = stealthMode;
+                            setMessage("Stealth mode " + (stealthMode ? "enabled" : "disabled"));
+                            break;
+                        case 192: // '`'
+                            if (stealthMode) {
+                                $('body').toggle();
+                                keyHidden = $('body').is(":hidden");
+                                if (currentLayout.wasHidden) {
+                                    currentLayout.resize();
+                                }
+                            }
+                            break;
+                        case 77: // 'm'
+                            currentLayout.muteToggle();
+                            break;
+                        case 73: // 'i'
+                            currentLayout.test();
+                            break;
+                        default:
+                            break;
+                    }
+                });
+                // mouse wheel
+                $("#content").on('mousewheel DOMMouseScroll', function (e) {
+                    e.stopPropagation();
+                    currentLayout.show(parseInt(e.originalEvent.wheelDelta || -e.originalEvent.detail));
+                });
+                // touch
+                var xDown, yDown, xUp, yUp = null;
+                var xDiffPrev = 0;
+                var touchOff = false;
+                var mouseButtonDown = false;
+                $("#content").bind('touchstart', function (ev) {
+                    ev.stopPropagation();
+                    if (touchOff) { return; }
+                    var e = ev.originalEvent;
+                    xDown = e.touches[0].clientX;
+                    yDown = e.touches[0].clientY;
+                });
+                $("#content").mousedown(function (ev) {
+                    var e = ev.originalEvent;
+                    if (e.which == 2) {
+                        mouseButtonDown = true;
+                        xDown = e.clientX;
+                        yDown = e.clientY;
+                    }
+                });
+                $("#content").bind('touchmove', function (ev) {
+                    ev.stopPropagation();
+                    if (touchOff) { return; }
+                    var e = ev.originalEvent;
+                    if (!xDown || !yDown) { return; }
+                    xUp = e.touches[0].clientX;
+                    yUp = e.touches[0].clientY;
+                    var xDiff = xDown - xUp;
+                    var yDiff = yDown - yUp;
+                    var direction = 0;
+                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                        if (xDiff > 0) {
+                            direction = 1;
+                        } else if (xDiff < 0) {
+                            direction = -1;
+                        }
+                        if (Math.abs(xDiff - xDiffPrev) > 30) {
+                            currentLayout.seek(-direction);
+                            xDiffPrev = xDiff;
+                        }
+                    }/* else {
+                        if ( yDiff > 25 ) {
+                            currentLayout.show(-1);
+                        } else if (yDiff < -25) {
+                            currentLayout.show(1);
+                        }
+                    }*/
+                });
+                $("#content").mousemove(function (ev) {
+                    if (!mouseButtonDown) { return; }
+                    if (!xDown || !yDown) { return; }
+                    var e = ev.originalEvent;
+                    xUp = e.clientX;
+                    yUp = e.clientY;
+                    var xDiff = xDown - xUp;
+                    var yDiff = yDown - yUp;
+                    var direction = 0;
+                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                        if (xDiff > 0) {
+                            direction = 1;
+                        } else if (xDiff < 0) {
+                            direction = -1;
+                        }
+                        if (Math.abs(xDiff - xDiffPrev) > 30) {
+                            currentLayout.seek(-direction);
+                            xDiffPrev = xDiff;
+                        }
+                    }
+                });
+                $("#content").bind('touchend', function (ev) {
+                    ev.stopPropagation();
+                    if (touchOff) { return; }
+                    if (typeof xUp == 'undefined' || !xUp || !yUp) { return; }
+                    var xDiff = xDown - xUp;
+                    var yDiff = yDown - yUp;
+                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                        /*if ( xDiff > 25 ) {
+                            //currentLayout.show(-1);
+                        } else if (xDiff < -25) {
+                            //currentLayout.show(1);
+                        }*/
+                    } else {
+                        if (yDiff > 25) {
+                            currentLayout.show(-1);
+                        } else if (yDiff < -25) {
+                            currentLayout.show(1);
+                        }
+                    }
+                    xDown = null;
+                    yDown = null;
+                    xUp = null;
+                    yUp = null;
+                });
+                $("#content").mouseup(function (ev) {
+                    var e = ev.originalEvent;
+                    if (e.which == 2) {
+                        mouseButtonDown = false;
+                        if (typeof xUp == 'undefined' || !xUp || !yUp) { return; }
+                        xDown = null;
+                        yDown = null;
+                        xUp = null;
+                        yUp = null;
+                    }
+                });
+            });
         </script>
         <style type="text/css">
     * {
