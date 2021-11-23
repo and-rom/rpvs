@@ -724,21 +724,22 @@ if (isset($_GET) && count($_GET)) {
         if (typeof Cookies.get("after") !== 'undefined') {
             if (confirm('Do you want to restore dash?')) {
                 $('#content').empty();
-                if (Cookies.get("layoutType") == "dash") {
-                    currentLayout.update(true, Cookies.get("layoutType"),Cookies.get("blog"),Cookies.get("before"),Cookies.get("type"));
-                } else {
-                    layouts.push({
+                currentLayout = {
                         __proto__: layout$,
                         layoutType: Cookies.get("layoutType"),
-                        blog: Cookies.get("blog"),
-                        type: Cookies.get("type")
-                    });
-                    currentLayout = layouts[layouts.length-1];
-                    currentLayout.update(true, "","",Cookies.get("before"),"");
+                        path: Cookies.get("path"),
+                        sort: Cookies.get("sort"),
+                        sortPeriod: Cookies.get("sortPeriod"),
+                        type: Cookies.get("type"),
+                        after: Cookies.get("after")
+                    }
+                if (Cookies.get("layoutType") == "feed") {
+                    layouts.splice(0, 0, currentLayout)
+                } else {
+                    layouts.push(currentLayout);
                 }
-                $("#type").val(currentLayout.type);
-                $("#back").toggle(currentLayout.layoutType != "dash");
-                $("#header, #footer").hide();
+                currentLayout.update(true);
+                $("#back").toggle(currentLayout.layoutType != "feed");
             }
         }
         currentLayout.save();
@@ -819,6 +820,13 @@ if (isset($_GET) && count($_GET)) {
                 layouts.pop();
             break;
         }
+
+        currentLayout = layouts[layouts.length-1];
+        $("#type").val(currentLayout.type);
+        currentLayout.save();
+        currentLayout.display();
+        if (layouts.length < 3) $("#home").hide();
+        if (layouts.length == 1) $("#back").hide();
     });
     $("#sort").on('click',function (e){
         $("#sort-menu").toggle();
