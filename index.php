@@ -250,11 +250,8 @@ if (isset($_GET) && count($_GET)) {
         $response->msg = "Authorization Required";
         $response->auth_url = $authorizationUrl;
     }
-    //$response->debug_content = isset($content) ? $content : "";
-    //$response->debug_request = isset($content) ? 'https://oauth.reddit.com/' . $sort . '.json?' . http_build_query($options) : "";
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($response ,JSON_UNESCAPED_UNICODE);
-
     exit;
 }
 ?>
@@ -347,8 +344,6 @@ if (isset($_GET) && count($_GET)) {
                                     }
                                 }
                                 if (data.hasOwnProperty('after')) this.after = data.after;
-                                //if (data.hasOwnProperty('debug_content')) this.debug_content = data.debug_content;
-                                //if (data.hasOwnProperty('debug_request')) this.debug_request = data.debug_request;
                                 break;
                             case 511:
                                 $("#loader").hide();
@@ -664,8 +659,6 @@ if (isset($_GET) && count($_GET)) {
                         console.log("this.slides.length: " + this.slides.length);
                         console.log("this.slides");
                         console.log(this.slides);
-                        console.log(this.debug_request);
-                        console.log(this.debug_content);
                     }
                 };
 
