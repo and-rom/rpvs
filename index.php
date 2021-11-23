@@ -54,7 +54,6 @@ if (isset($_GET) && count($_GET)) {
             $path = isset($_GET['path']) ? $_GET['path'] : "/";
             $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
             $options['after'] = isset($_GET['after']) ? $_GET['after'] : "";
-            $options['headers']['Accept'] = 'application/json';
             $apiRequest = $provider->getAuthenticatedRequest(
                 'GET',
                 'https://oauth.reddit.com' . $path . $sort . '?' . http_build_query($options),
@@ -63,10 +62,9 @@ if (isset($_GET) && count($_GET)) {
             $apiResponse = $provider->getResponse($apiRequest);
             $content = (string) $apiResponse->getBody();
             $apiResponse = json_decode($content);
-            $posts = $apiResponse->data->children;
             $response->posts = [];
-            foreach ($posts as $post) {
-                $last_id = $post->data->id;
+            foreach ($apiResponse->data->children as $post) {
+                $last_name = $post->data->name;
                 $obj = new stdClass;
                 if (isset($post->data->post_hint)) {
                     switch ($post->data->post_hint) {
@@ -81,7 +79,6 @@ if (isset($_GET) && count($_GET)) {
                                 $obj->type = "video";
                             } else {
                                 $obj->type = "link";
-                                //continue 2;
                             }
                             break;
                         case "rich:video":
@@ -97,7 +94,6 @@ if (isset($_GET) && count($_GET)) {
                     $obj->type = "photo";
                 } else {
                     $obj->type = "unknown";
-                   //continue;
                 }
                 $obj->id = $post->data->id;
                 $obj->title = (isset($post->data->title) ? $post->data->title : "" );
@@ -127,7 +123,6 @@ if (isset($_GET) && count($_GET)) {
                 $obj->total_awards_received = $post->data->total_awards_received;
 
                 $obj->url = $post->data->url;
-                //echo $post->data->id."</br>\n";
                 switch ($obj->type) {
                     case "photo":
                         $obj->src = $post->data->url;
@@ -162,7 +157,9 @@ if (isset($_GET) && count($_GET)) {
                 }
             }
 
-            $response->after = (isset($apiResponse->data->after)) ? $apiResponse->data->after : $last_id;
+            $response->after = isset($apiResponse->data->after) ? $apiResponse->data->after : isset($last_name) ? $last_name : "";
+            $response->code = 200;
+            break;
         case "srs":
             $response->s = [];
             $options['after'] = '';
@@ -218,7 +215,7 @@ if (isset($_GET) && count($_GET)) {
             break;
     }
 
-    } else if(isset($_GET['code']) && isset($_SESSION['oauth2state']) && isset($_GET['state'])) {
+    } else if(isset($_GET['code']) && isset($_GET['state']) && isset($_SESSION['oauth2state'])) {
 	    if($_GET['state'] == $_SESSION['oauth2state']) {
 		    unset($_SESSION['oauth2state']);
 		    try {
@@ -243,9 +240,9 @@ if (isset($_GET) && count($_GET)) {
             'duration' => "permanent"
         ]);
 	    $_SESSION['oauth2state'] = $provider->getState();
-            $response->code = 511;
-	        $response->msg = "Authorization Required";
-	        $response->auth_url = $authorizationUrl;
+        $response->code = 511;
+        $response->msg = "Authorization Required";
+        $response->auth_url = $authorizationUrl;
     }
     //$response->debug_content = isset($content) ? $content : "";
     //$response->debug_request = isset($content) ? 'https://oauth.reddit.com/' . $sort . '.json?' . http_build_query($options) : "";
@@ -282,8 +279,8 @@ if (isset($_GET) && count($_GET)) {
         layoutType: "feed",
         sort: "new",
         type:"all",
-        currentSlide:0,
         after:"",
+        currentSlide:0,
         slides: [],
         noMore: false,
         iframe: null,
@@ -301,9 +298,6 @@ if (isset($_GET) && count($_GET)) {
                 return;
             }
             $("#loader").show();
-            //this.after = after != "" ? after : this.slides.length != 0 ? this.layoutType == "likes" ? this.slides[this.slides.length-1].liked_timestamp : this.last_id : "";
-
-            if (restore && layoutType == "feed" && this.type != type) { this.type = type }
 
             $.ajax({
                 dataType: "json",
@@ -320,7 +314,6 @@ if (isset($_GET) && count($_GET)) {
             });
         },
         restore:  function(data){
-            this.slides = [];
             this.response(data);
             setMessage("Restored");
         },
@@ -666,10 +659,7 @@ if (isset($_GET) && count($_GET)) {
             console.log("this.layoutType: " + this.layoutType);
             console.log("this.blog: " + this.blog);
             console.log("this.type: " + this.type);
-            console.log("this.tag: " + this.tag);
-            console.log("this.own: " + this.own);
             console.log("this.currentSlide: " + this.currentSlide);
-            console.log("this.currentPage: " + this.currentPage);
             console.log("this.slides.length: " + this.slides.length);
             console.log("this.slides");
             console.log(this.slides);
@@ -825,7 +815,6 @@ if (isset($_GET) && count($_GET)) {
         $('#content').empty();
         currentLayout.type=this.value;
         currentLayout.currentSlide=0;
-        currentLayout.currentPage=0;
         currentLayout.slides=[];
         currentLayout.update();
         currentLayout.save();
@@ -1087,12 +1076,13 @@ if (isset($_GET) && count($_GET)) {
     }
     html,body {
         height: 100%;
+        color:white;
         background:black;
         touch-action: none;
         font-family: sans-serif;
     }
-    a {
-        color:white;
+    .button, .subreddit, .multireddit, #author, .home {
+        cursor: pointer;
     }
     #header, #messages {
         overflow-y: scroll;
