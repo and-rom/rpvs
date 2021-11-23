@@ -78,7 +78,10 @@ if (isset($_GET) && count($_GET)) {
                         case "link":
                             if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
                                 $obj->type = "video";
-                            } else {
+                            } elseif (isset($post->data->preview->images[0]->source->url)) {
+                                $obj->type = "photo";
+                                $preview = 1;
+                            } else{
                                 $obj->type = "link";
                             }
                             break;
@@ -96,8 +99,11 @@ if (isset($_GET) && count($_GET)) {
                 } else {
                     $obj->type = "unknown";
                 }
-                $obj->id = $post->data->id;
-                $obj->title = (isset($post->data->title) ? $post->data->title : "" );
+
+                if ((isset($_GET['type']) && $_GET['type'] != 'all' && $_GET['type'] != $obj->type) || $obj->type == "unknown" || $obj->type == "link")
+                    continue;
+                $obj->name = $post->data->name;
+                $obj->title = isset($post->data->title) ? $post->data->title : "" ;
                 $obj->subreddit = $post->data->subreddit;
                 $obj->url = '/'.$post->data->subreddit_name_prefixed.'/';
                 $obj->parent = isset($post->data->crosspost_parent) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
@@ -123,16 +129,16 @@ if (isset($_GET) && count($_GET)) {
                 }
                 $obj->total_awards_received = $post->data->total_awards_received;
 
-                $obj->url = $post->data->url;
+                $obj->preview = isset($post->data->preview->images[0]->source->url) ? $post->data->preview->images[0]->source->url : "";
+
                 switch ($obj->type) {
                     case "photo":
-                        $obj->src = $post->data->url;
+                        $obj->src = !isset($preview) ? $post->data->url : $post->data->preview->images[0]->source->url;
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
                         if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
                             $obj->src = $post->data->preview->reddit_video_preview->fallback_url;
-                            $obj->preview = $post->data->preview->images[0]->source->url;
                             $response->posts[] = clone $obj;
                         }
                         break;
