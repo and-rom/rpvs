@@ -29,20 +29,20 @@ if (isset($_GET) && count($_GET)) {
 
 
     if(isset($_SESSION['oauth2token'])) {
-	    $oauth2token = unserialize($_SESSION['oauth2token']);
-	    if($oauth2token->hasExpired()) {
-	        try {
-		        $oauth2token = $provider->getAccessToken('refresh_token', [
-					    'refresh_token' => $oauth2token->getRefreshToken()
-        			]);
-		        $_SESSION['oauth2token'] = serialize($oauth2token);
-		        header('Location: ./');
-		        exit;
-	        } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-	            $response->code = 204;
-    	        $response->msg = $e->getMessage();
-	        }
-	    }
+        $oauth2token = unserialize($_SESSION['oauth2token']);
+        if($oauth2token->hasExpired()) {
+            try {
+                $oauth2token = $provider->getAccessToken('refresh_token', [
+                        'refresh_token' => $oauth2token->getRefreshToken()
+                    ]);
+                $_SESSION['oauth2token'] = serialize($oauth2token);
+                header('Location: ./');
+                exit;
+            } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+                $response->code = 204;
+                $response->msg = $e->getMessage();
+            }
+        }
 
     $options['raw_json'] = 1;
     $options['limit'] = 20;
@@ -223,30 +223,30 @@ if (isset($_GET) && count($_GET)) {
     }
 
     } else if(isset($_GET['code']) && isset($_GET['state']) && isset($_SESSION['oauth2state'])) {
-	    if($_GET['state'] == $_SESSION['oauth2state']) {
-		    unset($_SESSION['oauth2state']);
-		    try {
-		        $oauth2token = $provider->getAccessToken('authorization_code', [
+        if($_GET['state'] == $_SESSION['oauth2state']) {
+            unset($_SESSION['oauth2state']);
+            try {
+                $oauth2token = $provider->getAccessToken('authorization_code', [
                     'code' => $_GET['code'],
                     'state' => $_GET['state']
                 ]);
-		        $_SESSION['oauth2token'] = serialize($oauth2token);
-		        header('Location: ./');
-		        exit;
-		    } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-	            $response->code = 204;
-    	        $response->msg = $e->getMessage();
-	        }
-	    }
-	    else {
-		    exit("Returned state didn't match the expected value. Please go back and try again.");
-	    }
+                $_SESSION['oauth2token'] = serialize($oauth2token);
+                header('Location: ./');
+                exit;
+            } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
+                $response->code = 204;
+                $response->msg = $e->getMessage();
+            }
+        }
+        else {
+            exit("Returned state didn't match the expected value. Please go back and try again.");
+        }
     } else {
-	    $authorizationUrl = $provider->getAuthorizationUrl([
+        $authorizationUrl = $provider->getAuthorizationUrl([
             'scope' => ['account', 'creddits', 'edit', 'flair', 'history', 'identity', 'modconfig', 'modcontributors', 'modflair', 'modlog', 'modmail', 'modothers', 'modposts', 'modself', 'modwiki', 'mysubreddits', 'privatemessages', 'read', 'report', 'save', 'structuredstyles', 'submit', 'subscribe', 'vote', 'wikiedit', 'wikiread'],
             'duration' => "permanent"
         ]);
-	    $_SESSION['oauth2state'] = $provider->getState();
+        $_SESSION['oauth2state'] = $provider->getState();
         $response->code = 511;
         $response->msg = "Authorization Required";
         $response->auth_url = $authorizationUrl;
