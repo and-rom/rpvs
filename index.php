@@ -451,7 +451,7 @@ if (isset($_GET) && count($_GET)) {
                         $("#date").append($("<span />", {
                             title: this.dateTime(this.slides[this.currentSlide].created)
                         }).html(this.age(this.slides[this.currentSlide].created))).show();
-                        $("#score").html(this.slides[this.currentSlide].scor > 1000 ? Math.round(this.slides[this.currentSlide].scor / 100) / 10 + "K" : this.slides[this.currentSlide].score).show();
+                        $("#score").html(this.slides[this.currentSlide].score > 1000 ? Math.round(this.slides[this.currentSlide].score / 100) / 10 + "K" : this.slides[this.currentSlide].score).show();
                         $("#num_comments span").html(this.slides[this.currentSlide].num_comments);
                         $("#num_comments").show();
                         $("#nsfw").toggle(this.slides[this.currentSlide].over_18);
