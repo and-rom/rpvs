@@ -36,8 +36,6 @@ if (isset($_GET) && count($_GET)) {
                         'refresh_token' => $oauth2token->getRefreshToken()
                     ]);
                 $_SESSION['oauth2token'] = serialize($oauth2token);
-                header('Location: ./');
-                exit;
             } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
                 $response->code = 204;
                 $response->msg = $e->getMessage();
