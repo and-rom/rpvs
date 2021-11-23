@@ -45,7 +45,7 @@ if (isset($_GET) && count($_GET)) {
 	    }
 
     $options['raw_json'] = 1;
-    $options['limit'] = 10;
+    $options['limit'] = 20;
     switch ($action) {
         case "feed":
             $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
