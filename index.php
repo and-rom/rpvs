@@ -37,7 +37,7 @@ if (isset($_GET) && count($_GET)) {
                     ]);
                 $_SESSION['oauth2token'] = serialize($oauth2token);
             } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-                $response->code = 204;
+                $response->code = 401;
                 $response->msg = $e->getMessage();
             }
         }
@@ -232,7 +232,7 @@ if (isset($_GET) && count($_GET)) {
                 header('Location: ./');
                 exit;
             } catch (League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-                $response->code = 204;
+                $response->code = 401;
                 $response->msg = $e->getMessage();
             }
         }
