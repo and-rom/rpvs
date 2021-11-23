@@ -850,6 +850,7 @@ if (isset($_GET) && count($_GET)) {
                         case "sort-hot":
                         case "sort-new":
                         case "sort-rising":
+                            $("#sort-menu").hide();
                             currentLayout.update();
                             currentLayout.save();
                             break;
@@ -859,11 +860,12 @@ if (isset($_GET) && count($_GET)) {
                             $("#sort-period").show();
                             break;
                     }
-                    $("#sort-menu").hide();
                 });
                 $("#sort-period li").on('click', function (e) {
                     currentLayout.sortPeriod = this.id.split("-")[1];
-
+                    $("#sort-menu").hide();
+                    currentLayout.update();
+                    currentLayout.save();
                 });
                 $("#close").on('click', function (e) {
                     $("#sidebar").hide();
