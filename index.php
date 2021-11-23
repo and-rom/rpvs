@@ -1198,7 +1198,6 @@ if (isset($_GET) && count($_GET)) {
         width: calc(100% - 20px);
         padding: 5px 10px 0;
         position: relative;
-
         font-size:0;
         color: darkgray;
     }
