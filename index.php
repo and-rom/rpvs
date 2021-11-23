@@ -1276,6 +1276,8 @@ if (isset($_GET) && count($_GET)) {
             }
 
             #all_awardings img {
+                width: 16px;
+                height: 16px;
                 vertical-align: middle;
             }
 
