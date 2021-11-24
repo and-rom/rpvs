@@ -369,7 +369,9 @@ if (isset($_GET) && count($_GET)) {
                         this.locked = true;
                     },
                     unlock: function (loader = true) {
-                        if (!this.updateLocked && loader) $("#loader").hide();
+                        if ((!this.updateLocked || this.noMore) && loader) {
+                            $("#loader").hide();
+                        }
                         this.locked = false;
                     },
                     checkHidden: function () {
@@ -832,6 +834,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.sort = this.id.split("-")[1];
                     currentLayout.after = "";
                     currentLayout.currentSlide = 0;
+                    currentLayout.updateLocked = false;
                     currentLayout.slides = [];
                     switch (this.id) {
                         case "sort-best":
