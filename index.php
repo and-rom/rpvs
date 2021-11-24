@@ -775,8 +775,15 @@ if (isset($_GET) && count($_GET)) {
                 });
 
                 $("#content").on('click', function (e) {
+                    if ($("#sort-menu").is(":visible")) {
+                        $("#sort-menu").hide();
+                        return;
+                    }
+                    if ($("#sidebar").is(":visible")) {
+                        $("#sidebar").hide();
+                        return;
+                    }
                     $(".header").toggle();
-                    $("#sidebar").hide();
                 });
                 $(document).on('click', '.subreddit, .multireddit, #author', function (e) {
                     layouts.push({
