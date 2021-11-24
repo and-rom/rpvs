@@ -557,6 +557,7 @@ if (isset($_GET) && count($_GET)) {
                             this.currentSlide++;
                             return true;
                         } else {
+                            setMessage("Last post");
                             return false;
                         }
                     },
