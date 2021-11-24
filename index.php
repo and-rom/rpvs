@@ -336,14 +336,15 @@ if (isset($_GET) && count($_GET)) {
                                     if (data.posts.length == 0) {
                                         this.noMore = true;
                                         setMessage("No more posts.");
-                                    }
-                                    this.slides = this.slides.concat(data.posts);
-                                    this.updateLocked = false;
-                                    if (this.currentSlide == 0) {
-                                        this.display();
+                                    } else {
+                                        this.slides = this.slides.concat(data.posts);
+                                        this.updateLocked = false;
+                                        if (this.currentSlide == 0) {
+                                            this.display();
+                                        }
+                                        if (data.hasOwnProperty('after')) this.after = data.after;
                                     }
                                 }
-                                if (data.hasOwnProperty('after')) this.after = data.after;
                                 break;
                             case 511:
                                 $("#loader").hide();
