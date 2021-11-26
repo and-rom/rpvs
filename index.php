@@ -411,22 +411,22 @@ if (isset($_GET) && count($_GET)) {
                             localStorage.setItem('after', this.slides[this.currentSlide - 1].name);
                         }
                     },
-                    displayPostInfo: function () {
+                    displayHeaderInfo: function () {
                         switch (this.layoutType) {
                             case "feed":
                                 $("#layout").html("Front Page");
                                 break;
                             case "sr":
-                                $("#layout").html(this.slides[this.currentSlide].subreddit);
-                                break;
                             case "mr":
                                 $("#layout").html(this.path.split("/").at(-2));
                                 break;
                             case "u":
-                                $("#layout").html(this.slides[this.currentSlide].author);
+                                $("#layout").html(this.path.split("/").at(-3));
                                 break;
                         }
                         $("#sort").html(this.sort + (this.sortPeriod != "" ? "  &#8729; " + this.sortPeriod : ""));
+                    },
+                    displayPostInfo: function () {
                         $("#title").html(this.slides[this.currentSlide].title).show();
                         $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
                         if (this.slides[this.currentSlide].parent != "") {
@@ -725,6 +725,8 @@ if (isset($_GET) && count($_GET)) {
 
                 currentLayout = layouts[0];
 
+                currentLayout.save();
+                currentLayout.displayHeaderInfo();
                 currentLayout.update();
 
                 $(document).on("click", ".restore", function () {
@@ -817,8 +819,9 @@ if (isset($_GET) && count($_GET)) {
                         path: $(this).data("url")
                     });
                     currentLayout = layouts[layouts.length - 1];
-                    currentLayout.update();
                     currentLayout.save();
+                    currentLayout.displayHeaderInfo();
+                    currentLayout.update();
                     $("#type-" + currentLayout.type).prop('checked', true);
                     $("#sidebar").hide();
                     $("#sort-menu").hide();
@@ -842,6 +845,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout = layouts[layouts.length - 1];
                     $("#type-" + currentLayout.type).prop('checked', true);
                     currentLayout.save();
+                    currentLayout.displayHeaderInfo();
                     currentLayout.display();
                     $("#sidebar").hide();
                     $("#sort-menu").hide();
@@ -874,6 +878,7 @@ if (isset($_GET) && count($_GET)) {
                             $("#sidebar").hide();
                             currentLayout.update();
                             currentLayout.save();
+                            currentLayout.displayHeaderInfo();
                             break;
                         case "sort-controversial":
                         case "sort-top":
@@ -887,6 +892,8 @@ if (isset($_GET) && count($_GET)) {
                     $("#sort-menu").hide();
                     $("#sidebar").hide();
                     currentLayout.save();
+                    currentLayout.displayHeaderInfo();
+                    currentLayout.update();
                 });
                 $("#close").on('click', function (e) {
                     $("#sidebar").hide();
