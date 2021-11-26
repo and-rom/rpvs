@@ -50,7 +50,11 @@ if (isset($_GET) && count($_GET)) {
         case "mr":
         case "u":
             $path = isset($_GET['path']) ? $_GET['path'] : "/";
-            $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
+            if ($action == "u") {
+                $options['sort'] = isset($_GET['sort']) ? $_GET['sort'] : "";
+                $sort = "";
+            } else
+                $sort = isset($_GET['sort']) ? $_GET['sort'] : "";
             $options['t'] = isset($_GET['sortPeriod']) ? $_GET['sortPeriod'] : "";
             $options['after'] = isset($_GET['after']) ? $_GET['after'] : "";
             $apiRequest = $provider->getAuthenticatedRequest(
