@@ -994,16 +994,16 @@ if (isset($_GET) && count($_GET)) {
                             $("#back").click();
                             break;
                         case 69: // 'e'
-                            // blog
-                            $("#blog-name").click();
+                            // subreddit
+                            $("#subreddit").click();
                             break;
                         case 83: // 's'
-                            // reblogged from
-                            $("#reblogged-from").click();
+                            // parent
+                            $("#parent").click();
                             break;
                         case 88: // 'x'
-                            // source
-                            $("#source").click();
+                            // author
+                            $("#author").click();
                             break;
                         case 70: // 'f'
                             // follow
@@ -1011,14 +1011,14 @@ if (isset($_GET) && count($_GET)) {
                             break;
                         case 78: // 'n'
                             // photo
-                            $("#type").val("photo").trigger('change');
+                            $("#type-photo").trigger('click');
                             break;
                         case 66: // 'b'
-                            // both
-                            $("#type").val("all").trigger('change');
+                            // all
+                            $("#type-all").trigger('click');
                         case 86: // 'v'
                             // video
-                            $("#type").val("video").trigger('change');
+                            $("#type-video").trigger('click');
                             break;
                         case 84: // 't'
                             // open post
