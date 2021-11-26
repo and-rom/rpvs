@@ -744,6 +744,9 @@ if (isset($_GET) && count($_GET)) {
                     }
                     currentLayout.update(true);
                     currentLayout.save();
+                    $("#type-" + currentLayout.type).prop('checked', true);
+                    $("#back").toggle(currentLayout.layoutType != "feed");
+                });
 
                 $(document).one('auth', function (e) {
                     if (typeof layoutParams.after !== 'undefined' ) setMessage("Restore", "restore", "button");
@@ -814,6 +817,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout = layouts[layouts.length - 1];
                     currentLayout.update();
                     currentLayout.save();
+                    $("#type-" + currentLayout.type).prop('checked', true);
                     $("#sidebar").hide();
                     $("#back").show();
                     if (layouts.length > 2) $("#home").show();
@@ -833,7 +837,7 @@ if (isset($_GET) && count($_GET)) {
                     }
 
                     currentLayout = layouts[layouts.length - 1];
-                    $("#type").val(currentLayout.type);
+                    $("#type-" + currentLayout.type).prop('checked', true);
                     currentLayout.save();
                     currentLayout.display();
                     if (layouts.length < 3) $("#home").hide();
@@ -885,6 +889,16 @@ if (isset($_GET) && count($_GET)) {
                         requestFullScreen.call(document.documentElement);
                     else
                         cancelFullScreen.call(document);
+                });
+                $('input[name="type"]').change(function () {
+                    $('#content').empty();
+                    currentLayout.type=this.id.split("-")[1];
+                    currentLayout.after="";
+                    currentLayout.currentSlide=0;
+                    currentLayout.slides=[];
+                    currentLayout.update();
+                    currentLayout.save();
+                    $("#sibebar, #sort-menu").hide();
                 });
                 var timer;
                 var hided = false;
@@ -1333,6 +1347,24 @@ if (isset($_GET) && count($_GET)) {
                 margin-right: initial;
             }
 
+            .radio-toolbar {
+                display: inline-block;
+                height: 2rem;
+            }
+            .radio-toolbar input[type="radio"] {
+                display: none;
+            }
+
+            .radio-toolbar label {
+                display: inline-block;
+                vertical-align: middle;
+                cursor: pointer;
+            }
+
+            .radio-toolbar input[type="radio"]:checked+label svg {
+                fill: dodgerblue;
+            }
+
             #back,
             #home {
                 display: none;
@@ -1566,6 +1598,28 @@ if (isset($_GET) && count($_GET)) {
                 <span id="sort"></span>
             </div>
             <div id="buttons-right">
+                <div class="radio-toolbar button">
+                    <input type="radio" id="type-photo" name="type">
+                    <label class="button" for="type-photo">
+                    <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100" height="100">
+                        <path d="M 6e-7,2e-6 V 99.999998 H 99.857089 L 99.999999,2e-6 Z m 8.6084168,8.47 H 91.534499 v 64.88784 L 73.497012,58.118139 57.389452,71.734008 26.376191,41.453461 8.6084174,52.980163 Z M 68.724428,22.942097 c -4.279305,-3.09e-4 -7.748444,3.468831 -7.748135,7.748136 -3.1e-4,4.279305 3.46883,7.748446 7.748135,7.748137 4.279306,3.1e-4 7.748447,-3.468831 7.748137,-7.748137 3.09e-4,-4.279306 -3.468831,-7.748446 -7.748137,-7.748136 z"/>
+                    </svg>
+                    </label>
+
+                    <input type="radio" id="type-all" name="type" checked>
+                    <label class="button" for="type-all">
+                        <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100" height="100">
+                            <path d="M 0 0 L 0 100 L 50 100 L 99.857422 100 L 100 0 L 50 0 L 0 0 z M 8.609375 8.4707031 L 50 8.4707031 L 91.535156 8.4707031 L 91.535156 73.357422 L 73.496094 58.117188 L 57.388672 71.734375 L 50 64.519531 L 50 91.529297 L 8.609375 91.529297 L 8.609375 8.4707031 z M 68.724609 22.941406 C 64.445299 22.941106 60.976253 26.410153 60.976562 30.689453 C 60.976253 34.968763 64.445299 38.43781 68.724609 38.4375 C 73.003909 38.43781 76.472976 34.968763 76.472656 30.689453 C 76.472966 26.410143 73.003909 22.941106 68.724609 22.941406 z M 25 25 L 25 75 L 50 62.5 L 50 37.5 L 25 25 z " />
+                        </svg>
+                    </label>
+
+                    <input type="radio" id="type-video" name="type">
+                    <label class="button" for="type-video">
+                    <svg class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100" height="100">
+                        <path d="M 0,-1.5e-6 V 100 H 99.85742 L 100,-1.5e-6 Z m 8.60938,8.470703 H 91.53516 V 91.529291 H 8.60938 Z M 25,24.999998 V 75.000001 L 75,49.999999 Z"/>
+                    </svg>
+                    </label>
+                </div>
                 <svg id="fullscreen" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100"  width="100%" height="100%">
                     <polygon style="" points="85.669,76.831 71.338,62.5 62.5,71.338 76.831,85.669 62.5,100 100,100 100,62.5 "/>
                     <polygon style="" points="37.5,71.338 28.662,62.5 14.331,76.831 0,62.5 0,100 37.5,100 23.169,85.669 "/>
