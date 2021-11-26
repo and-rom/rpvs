@@ -141,8 +141,11 @@ if (isset($_GET) && count($_GET)) {
                     case "video":
                         if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
                             $obj->src = $post->data->preview->reddit_video_preview->fallback_url;
-                            $response->posts[] = clone $obj;
+                        } else {
+                            $obj->type = "photo";
+                            $obj->src = $obj->preview;
                         }
+                        $response->posts[] = clone $obj;
                         break;
                     case "gallery":
                         foreach ($post->data->gallery_data->items as $item) {
