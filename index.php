@@ -1177,7 +1177,6 @@ if (isset($_GET) && count($_GET)) {
             * {
                 margin: 0;
                 padding: 0;
-                border: 0;
             }
 
             html,
