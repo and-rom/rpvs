@@ -277,7 +277,6 @@ if (isset($_GET) && count($_GET)) {
         <meta name="theme-color" content="#222222" />
         <title>Reddit Photo Video Slider</title>
         <link rel="icon" href="/img/rpvs16.png" type="image/png">
-        <script type="text/javascript" src="js/js.cookie.min.js"></script>
         <script type="text/javascript" src="js/jquery-3.6.0.min.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {
@@ -302,11 +301,11 @@ if (isset($_GET) && count($_GET)) {
                     updateLocked: false,
                     // Methods
                     save: function () {
-                        Cookies.set("layoutType", this.layoutType, { expires: 0.5 });
-                        Cookies.set("path", this.path, { expires: 0.5 });
-                        Cookies.set("sort", this.sort, { expires: 0.5 });
-                        Cookies.set("sortPeriod", this.sortPeriod, { expires: 0.5 });
-                        Cookies.set("type", this.type, { expires: 0.5 });
+                        localStorage.setItem('layoutType', this.layoutType);
+                        localStorage.setItem('path', this.path);
+                        localStorage.setItem('sort', this.sort);
+                        localStorage.setItem('sortPeriod', this.sortPeriod);
+                        localStorage.setItem('type', this.type);
                     },
                     update: function (restore = false) {
                         if (this.updateLocked) {
@@ -405,9 +404,9 @@ if (isset($_GET) && count($_GET)) {
                         this.clearPostInfo();
                         this.displayPostInfo();
                         if (this.currentSlide - 1 < 0) {
-                            Cookies.set("after", "", { expires: 0.5 });
+                            localStorage.setItem('after', "");
                         } else {
-                            Cookies.set("after", this.slides[this.currentSlide - 1].name, { expires: 0.5 });
+                            localStorage.setItem('after', this.slides[this.currentSlide - 1].name);
                         }
                     },
                     displayPostInfo: function () {
@@ -671,6 +670,7 @@ if (isset($_GET) && count($_GET)) {
                         console.log("this.slides.length: " + this.slides.length);
                         console.log("this.slides");
                         console.log(this.slides);
+                        console.log(layoutParams);
                     }
                 };
 
@@ -679,25 +679,25 @@ if (isset($_GET) && count($_GET)) {
                 };
 
                 var messageTimer;
-                function setMessage(text, id = "") {
-                    if (id == "") {
-                        $("#messages").append($("<span> </span>").html(text));
+                function setMessage(text, className = "", object = "") {
+                    if (className != "timer") {
+                        $("#messages").append($("<" + (object != "" ? object : "span") + " />").addClass(className).html(text));
                         setTimeout(function () {
-                            $("#messages span").first().remove();
-                        }, 5000);
+                            $("#messages " + (object != "" ? object : "span") + (className != "" ? "." + className : "")).first().remove();
+                        }, className == "restore" ? 10000 : 5000);
                     } else {
-                        if (!$('#messages span#' + id).length)
-                            $("#messages").append($("<span id=" + id + "> </span>").html(text));
+                        if (!$('#messages span.' + className).length)
+                            $("#messages").append($("<span />").addClass(className).html(text));
                         else
-                            $("#messages span#" + id).html(text);
+                            $("#messages span." + className).html(text);
 
                         if (messageTimer) {
                             clearTimeout(messageTimer);
                             messageTimer = 0;
                         }
                         messageTimer = setTimeout(function () {
-                            $("#messages span#" + id).first().remove();
-                        }, 1000);
+                            $("#messages span." + className).first().remove();
+                        }, 2000);
                     }
                 }
 
@@ -708,6 +708,15 @@ if (isset($_GET) && count($_GET)) {
                     return (hh > 0 ? (hh < 10 ? "0" : "") + hh + ":" : "") + (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
                 }
 
+                layoutParams = {
+                    layoutType: localStorage.getItem('layoutType'),
+                    path: localStorage.getItem('path'),
+                    sort: localStorage.getItem('sort'),
+                    sortPeriod: localStorage.getItem('sortPeriod'),
+                    type: localStorage.getItem('type'),
+                    after: localStorage.getItem('after')
+                }
+
                 layouts.push({
                     __proto__: layout$
                 });
@@ -716,29 +725,28 @@ if (isset($_GET) && count($_GET)) {
 
                 currentLayout.update();
 
-                $(document).one('auth', function (e) {
-                    if (typeof Cookies.get("after") !== 'undefined') {
-                        if (confirm('Do you want to restore dash?')) {
-                            $('#content').empty();
-                            currentLayout = {
-                                __proto__: layout$,
-                                layoutType: Cookies.get("layoutType"),
-                                path: Cookies.get("path"),
-                                sort: Cookies.get("sort"),
-                                sortPeriod: Cookies.get("sortPeriod"),
-                                type: Cookies.get("type"),
-                                after: Cookies.get("after")
-                            }
-                            if (Cookies.get("layoutType") == "feed") {
-                                layouts.splice(0, 0, currentLayout)
-                            } else {
-                                layouts.push(currentLayout);
-                            }
-                            currentLayout.update(true);
-                            $("#back").toggle(currentLayout.layoutType != "feed");
-                        }
+                $(document).on("click", ".restore", function () {
+                    $(this).remove();
+                    $('#content').empty();
+                    currentLayout = {
+                        __proto__: layout$,
+                        layoutType: layoutParams.layoutType,
+                        path: layoutParams.path,
+                        sort: layoutParams.sort,
+                        sortPeriod: layoutParams.sortPeriod,
+                        type: layoutParams.type,
+                        after: layoutParams.after
                     }
+                    if (layoutParams.layoutType) {
+                        layouts.splice(0, 0, currentLayout)
+                    } else {
+                        layouts.push(currentLayout);
+                    }
+                    currentLayout.update(true);
                     currentLayout.save();
+
+                $(document).one('auth', function (e) {
+                    if (typeof layoutParams.after !== 'undefined' ) setMessage("Restore", "restore", "button");
                     var ph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABGZJREFUeJztm01sVFUUx3/33MICB6QIxKWtoRihCiQukbjRxLjx25igMUZDYqLCQncCSwshasKGiGGB1cQ1MVU3tnWNtIWE1qgxEss4dUpqE43OPBf3PZwOM/M+7nv3vlp/yUk6ze0953/e67z77j1HUTzbQO+HYBjYCWoIgi3AZqASjvkdWAS1AMEsMAtqChoTQM1BjLmzF+QkyDRIEyTIaE2QKZATwB7fouKogBwBuWwhOM5mQA7z751TCvpBjoMsFCi83WogxzD/Rt5QoF8AmXcovFMi3gDEtfhB0JMehbeZngAGHGnXT4D85l/0LXYD9HNFKheQUyUQGmcnAZW3+PUgH5dAXFI7D6zLUby6UAJRKU1dMLHboUDO+ReT2T6B3k8I3Vu/nAIOZUjcNeAzCH4ENQj0xYyvQzAOahK4AsEPwM+gGphnfdbH3G5QFQi+yPC3+plsWdffAP0tEw2AzHUfqx+jd4I2gT4IMpv9TtBPp1U/CLKYzRn7Osy3C6TRMm4J9Muk+7beYLH2WDSakqEsHNV7TPt5OOYnYHcK4a0MW9wFkyRLuH7J4ktnpvu8cgykCtydUXw0T9UiCS/Gzd4Pct0iAVPdp9YHzSrSFvneIr55er9AyXGLyWMSwG324tkC8rdljEe7TV7B/pW2VwI6sQn0K6C+BPkOZAnkKsg50I+ycjW3HuS8ZXwBSI3O+wlyJIfJ0yTgQZBrMfNVQUZBTocJso0vssOdEpDHTk7SBBwA+StHQWnt5pd1tMLaB9yb4urZ0A/yKfGrwyLZRbjHGCZAnnfnW14H7nTnrxtGc3QHPOzIqwZec+QrjkfAJGAb2VdmaXkg9FcGhoGtYg4t8t9B6YwccOMnEQr0foHgPodO73HoKwHBsAA73DlUlu8BuTMk5qzOFYHXg4xbUTsEgu0OPW5w6CsBwXbB7Tmb9SZlzmx0nYCysdH5mVrZEExxwlpl6f8EgKr6jsIfqiphTc4aJZgVYM53GB6ZE1ONtVZR0wKNr4Gm71A8EEBjQoAF4LLvaDwwBdSihdCYz0g8MQY3t8Saoz4j8YPRHN0BF4Ee53r/Oa4Al4AVhQcf+YnFC2eiH1oS0DzDKi1MTskCNM9GH1rvgGXgtPt4nPM+Le8/ba/DzfeA627jcco8ND9o/UX7fsAiqLcdBuQY9RZwI3aUqb3NfPTcjT6QP/wdiOpxUpx/DIDUszlibxf9D3k8Da4DdyUVH6KfyujsYgdnOzGFD76u/pMpxUfIiYxOl0GNgXwI6iuQPz1e/ZGM4oHVXyo7CvbNFOtWcbF0bhXjfSBn/YtKbLmWy0coTCucb3FxNkKxx/36ccrbMvNsgcJXMFCypqlx0j/nrSlD29wvoF8F921zrWwGOYrp4XMl/FeQd4DbfQpvpwLyJqa9tSjh05hGyTzqjgtlD8gIyCVWNkqktQbItyDvAvcXEaiL6rCtLe3zQ2H7/B2YtproSi4DdVA1COaAq6BmoDGO2bYvjH8AJnU6lSYCwysAAAAASUVORK5CYII="
                     $.ajax({
                         dataType: "json",
@@ -1215,6 +1223,17 @@ if (isset($_GET) && count($_GET)) {
 
             #messages span {
                 display: block;
+            }
+
+            .restore {
+                margin: 5px 0;
+                padding: 1px 6px;
+                color: darkgray;
+                background-color: transparent;
+                border-width: 3px;
+                border-color: darkgray;
+                border-radius: 5px;
+                font-size: 1.5rem;
             }
 
             #subheader {
