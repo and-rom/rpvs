@@ -340,9 +340,10 @@ if (isset($_GET) && count($_GET)) {
                                 $(document).trigger('auth');
                                 if (data.hasOwnProperty('posts')) {
                                     $("#loader").hide();
-                                    if (data.posts.length == 0) {
+                                    if (data.posts.length == 0 && data.after == "") {
                                         this.noMore = true;
                                         setMessage("No more posts.");
+                                        this.display();
                                     } else {
                                         this.slides = this.slides.concat(data.posts);
                                         this.updateLocked = false;
@@ -393,7 +394,8 @@ if (isset($_GET) && count($_GET)) {
                         this.lock();
                         if (this.slides.length == 0) {
                             this.unlock();
-                            this.clearPostInfo(true);
+                            this.clearPostInfo();
+                            $('#content').empty();
                             return;
                         }
                         if (this.slides[this.currentSlide].type == "photo") {
@@ -424,7 +426,7 @@ if (isset($_GET) && count($_GET)) {
                                 $("#layout").html(this.slides[this.currentSlide].author);
                                 break;
                         }
-                        $("#sort").html(this.sort);
+                        $("#sort").html(this.sort + (this.sortPeriod != "" ? "  &#8729; " + this.sortPeriod : ""));
                         $("#title").html(this.slides[this.currentSlide].title).show();
                         $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
                         if (this.slides[this.currentSlide].parent != "") {
@@ -458,7 +460,7 @@ if (isset($_GET) && count($_GET)) {
                             $("#total_awards_received span").html(this.slides[this.currentSlide].total_awards_received); $("#total_awards_received").show();
                         }
                     },
-                    clearPostInfo: function (partial = false) {
+                    clearPostInfo: function () {
                         $("#title").empty().hide();
                         $("#subreddit").empty().hide().removeData();
                         $("#parent span").empty(); $("#parent").hide().removeData();
@@ -567,7 +569,7 @@ if (isset($_GET) && count($_GET)) {
                             this.currentSlide++;
                             return true;
                         } else {
-                            setMessage("Last post");
+                            if (!this.updateLocked) setMessage("Last post");
                             return false;
                         }
                     },
@@ -819,6 +821,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.save();
                     $("#type-" + currentLayout.type).prop('checked', true);
                     $("#sidebar").hide();
+                    $("#sort-menu").hide();
                     $("#back").show();
                     if (layouts.length > 2) $("#home").show();
                 });
@@ -840,19 +843,24 @@ if (isset($_GET) && count($_GET)) {
                     $("#type-" + currentLayout.type).prop('checked', true);
                     currentLayout.save();
                     currentLayout.display();
+                    $("#sidebar").hide();
+                    $("#sort-menu").hide();
                     if (layouts.length < 3) $("#home").hide();
                     if (layouts.length == 1) $("#back").hide();
                 });
                 $("#layout").on('click', function (e) {
                     $("#sidebar").toggle();
+                    $("#sort-menu").hide();
                 });
                 $("#sort").on('click', function (e) {
                     $("#sort-menu").toggle();
+                    $("#sort-best").toggle(currentLayout.layoutType == "feed");
                     $("#sort-order").show();
                     $("#sort-period").hide();
                 });
                 $("#sort-order li").on('click', function (e) {
                     currentLayout.sort = this.id.split("-")[1];
+                    currentLayout.sortPeriod = "";
                     currentLayout.after = "";
                     currentLayout.currentSlide = 0;
                     currentLayout.updateLocked = false;
@@ -863,6 +871,7 @@ if (isset($_GET) && count($_GET)) {
                         case "sort-new":
                         case "sort-rising":
                             $("#sort-menu").hide();
+                            $("#sidebar").hide();
                             currentLayout.update();
                             currentLayout.save();
                             break;
@@ -876,7 +885,7 @@ if (isset($_GET) && count($_GET)) {
                 $("#sort-period li").on('click', function (e) {
                     currentLayout.sortPeriod = this.id.split("-")[1];
                     $("#sort-menu").hide();
-                    currentLayout.update();
+                    $("#sidebar").hide();
                     currentLayout.save();
                 });
                 $("#close").on('click', function (e) {
