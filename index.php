@@ -1078,14 +1078,6 @@ if (isset($_GET) && count($_GET)) {
                     xDown = e.touches[0].clientX;
                     yDown = e.touches[0].clientY;
                 });
-                $("#content").mousedown(function (ev) {
-                    var e = ev.originalEvent;
-                    if (e.which == 2) {
-                        mouseButtonDown = true;
-                        xDown = e.clientX;
-                        yDown = e.clientY;
-                    }
-                });
                 $("#content").bind('touchmove', function (ev) {
                     ev.stopPropagation();
                     if (touchOff) { return; }
@@ -1114,27 +1106,6 @@ if (isset($_GET) && count($_GET)) {
                         }
                     }*/
                 });
-                $("#content").mousemove(function (ev) {
-                    if (!mouseButtonDown) { return; }
-                    if (!xDown || !yDown) { return; }
-                    var e = ev.originalEvent;
-                    xUp = e.clientX;
-                    yUp = e.clientY;
-                    var xDiff = xDown - xUp;
-                    var yDiff = yDown - yUp;
-                    var direction = 0;
-                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
-                        if (xDiff > 0) {
-                            direction = 1;
-                        } else if (xDiff < 0) {
-                            direction = -1;
-                        }
-                        if (Math.abs(xDiff - xDiffPrev) > 30) {
-                            currentLayout.seek(-direction);
-                            xDiffPrev = xDiff;
-                        }
-                    }
-                });
                 $("#content").bind('touchend', function (ev) {
                     ev.stopPropagation();
                     if (touchOff) { return; }
@@ -1158,6 +1129,35 @@ if (isset($_GET) && count($_GET)) {
                     yDown = null;
                     xUp = null;
                     yUp = null;
+                });
+                $("#content").mousedown(function (ev) {
+                    var e = ev.originalEvent;
+                    if (e.which == 2) {
+                        mouseButtonDown = true;
+                        xDown = e.clientX;
+                        yDown = e.clientY;
+                    }
+                });
+                $("#content").mousemove(function (ev) {
+                    if (!mouseButtonDown) { return; }
+                    if (!xDown || !yDown) { return; }
+                    var e = ev.originalEvent;
+                    xUp = e.clientX;
+                    yUp = e.clientY;
+                    var xDiff = xDown - xUp;
+                    var yDiff = yDown - yUp;
+                    var direction = 0;
+                    if (Math.abs(xDiff) > Math.abs(yDiff)) {
+                        if (xDiff > 0) {
+                            direction = 1;
+                        } else if (xDiff < 0) {
+                            direction = -1;
+                        }
+                        if (Math.abs(xDiff - xDiffPrev) > 30) {
+                            currentLayout.seek(-direction);
+                            xDiffPrev = xDiff;
+                        }
+                    }
                 });
                 $("#content").mouseup(function (ev) {
                     var e = ev.originalEvent;
