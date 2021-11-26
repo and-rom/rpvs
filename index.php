@@ -108,8 +108,8 @@ if (isset($_GET) && count($_GET)) {
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
                 $obj->subreddit = $post->data->subreddit;
                 $obj->url = '/'.$post->data->subreddit_name_prefixed.'/';
-                $obj->parent = isset($post->data->crosspost_parent) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
-                $obj->parent_url = isset($post->data->crosspost_parent) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
+                $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
+                $obj->parent_url = !empty($post->data->crosspost_parent_list) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
                 $obj->author = $post->data->author;
                 $obj->author_url = '/user/'.$post->data->author.'/submitted/';
                 $obj->locked = $post->data->locked;
