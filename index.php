@@ -102,8 +102,9 @@ if (isset($_GET) && count($_GET)) {
                     $obj->type = "unknown";
                 }
 
-                if ((isset($_GET['type']) && $_GET['type'] != 'all' && $_GET['type'] != $obj->type) || $obj->type == "unknown" || $obj->type == "link")
+                if ((isset($_GET['type']) && $_GET['type'] != 'all' && $_GET['type'] != $obj->type && !($obj->type == "photo" && $_GET['type'] == "video" && substr_compare($post->data->url, "gif", -strlen("gif")) === 0)) || $obj->type == "unknown" || $obj->type == "link")
                     continue;
+
                 $obj->name = $post->data->name;
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
                 $obj->subreddit = $post->data->subreddit;
