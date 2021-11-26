@@ -266,15 +266,16 @@ if (isset($_GET) && count($_GET)) {
 <!-- <?php echo version();?> -->
 <html>
     <head>
-        <title>Reddit Photo Video Slider</title>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta charset="utf-8">
-        <meta name="description" content="">
-        <meta name="author" content="">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta http-equiv="Cache-Control" content="max-age=3600, must-revalidate">
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="description" content="">
+        <meta name="author" content="">
         <meta name="theme-color" content="#222222" />
+        <title>Reddit Photo Video Slider</title>
         <link rel="icon" href="/img/rpvs16.png" type="image/png">
         <script type="text/javascript" src="js/js.cookie.min.js"></script>
         <script type="text/javascript" src="js/jquery-3.6.0.min.js"></script>
