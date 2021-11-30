@@ -62,7 +62,15 @@ if (isset($_GET) && count($_GET)) {
                 'https://oauth.reddit.com' . $path . $sort . '?' . http_build_query($options),
                 $oauth2token
             );
-            $apiResponse = $provider->getResponse($apiRequest);
+            try {
+                $apiResponse = $provider->getResponse($apiRequest);
+            } catch (GuzzleHttp\Exception\ClientException $e) {
+                $content = (string) $e->getResponse()->getBody();
+                $apiResponse = json_decode($content);
+                $response->code = $apiResponse->error;
+                $response->msg = $apiResponse->message;
+                break;
+            }
             $content = (string) $apiResponse->getBody();
             $apiResponse = json_decode($content);
             $response->posts = [];
