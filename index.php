@@ -570,7 +570,7 @@ if (isset($_GET) && count($_GET)) {
                             this.currentSlide++;
                             return true;
                         } else {
-                            if (!this.updateLocked) setMessage("Last post");
+                            if (this.currentSlide == this.slides.length - 1) setMessage("Last post");
                             return false;
                         }
                     },
