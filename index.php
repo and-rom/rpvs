@@ -149,6 +149,7 @@ if (isset($_GET) && count($_GET)) {
                         $response->posts[] = clone $obj;
                         break;
                     case "gallery":
+                        if (!isset($post->data->gallery_data->items)) break;
                         foreach ($post->data->gallery_data->items as $item) {
                             if ($post->data->media_metadata->{$item->media_id}->status == 'valid') {
                                 if (isset($post->data->media_metadata->{$item->media_id}->s->mp4)) {
