@@ -857,6 +857,7 @@ if (isset($_GET) && count($_GET)) {
                 });
                 $("#layout").on('click', function (e) {
                     $("#sidebar").toggle();
+                    $("#search").focus()
                     $("#sort-menu").hide();
                 });
                 $("#sort").on('click', function (e) {
