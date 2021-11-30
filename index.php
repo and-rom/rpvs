@@ -823,6 +823,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout = layouts[layouts.length - 1];
                     currentLayout.save();
                     currentLayout.displayHeaderInfo();
+                    currentLayout.clearPostInfo();
                     currentLayout.update();
                     $("#type-" + currentLayout.type).prop('checked', true);
                     $("#sidebar").hide();
@@ -878,9 +879,10 @@ if (isset($_GET) && count($_GET)) {
                         case "sort-rising":
                             $("#sort-menu").hide();
                             $("#sidebar").hide();
-                            currentLayout.update();
                             currentLayout.save();
                             currentLayout.displayHeaderInfo();
+                            currentLayout.clearPostInfo();
+                            currentLayout.update();
                             break;
                         case "sort-controversial":
                         case "sort-top":
@@ -895,6 +897,7 @@ if (isset($_GET) && count($_GET)) {
                     $("#sidebar").hide();
                     currentLayout.save();
                     currentLayout.displayHeaderInfo();
+                    currentLayout.clearPostInfo();
                     currentLayout.update();
                 });
                 $("#close").on('click', function (e) {
@@ -914,8 +917,9 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.after="";
                     currentLayout.currentSlide=0;
                     currentLayout.slides=[];
-                    currentLayout.update();
                     currentLayout.save();
+                    currentLayout.clearPostInfo();
+                    currentLayout.update();
                     $("#sibebar, #sort-menu").hide();
                 });
                 var timer;
