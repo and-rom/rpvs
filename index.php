@@ -742,12 +742,13 @@ if (isset($_GET) && count($_GET)) {
                         type: layoutParams.type,
                         after: layoutParams.after
                     }
-                    if (layoutParams.layoutType) {
+                    if (layoutParams.layoutType == "feed") {
                         layouts.splice(0, 0, currentLayout)
                     } else {
                         layouts.push(currentLayout);
                     }
                     currentLayout.update(true);
+                    currentLayout.displayHeaderInfo();
                     currentLayout.save();
                     $("#type-" + currentLayout.type).prop('checked', true);
                     $("#back").toggle(currentLayout.layoutType != "feed");
