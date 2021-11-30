@@ -968,7 +968,7 @@ if (isset($_GET) && count($_GET)) {
 
                 $("#search").keyup(function () {
                     $('.sidebar-container li.multireddit, .sidebar-container li.subreddit').each((idx, li) => {
-                        $(li).toggle($(li).text().indexOf($(this).val()) !== -1);
+                        $(li).toggle($(li).text().toLowerCase().indexOf($(this).val().toLowerCase()) !== -1);
                     });
                 });
 
