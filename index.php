@@ -1203,6 +1203,10 @@ if (isset($_GET) && count($_GET)) {
                 font-family: sans-serif;
             }
 
+            .subheader-container {
+                cursor: default;
+            }
+
             .button,
             .subreddit,
             .multireddit,
