@@ -80,13 +80,17 @@ if (isset($_GET) && count($_GET)) {
                 if (isset($post->data->post_hint)) {
                     switch ($post->data->post_hint) {
                         case "image":
-                            $obj->type = "photo";
+                            if (isset($post->data->preview->images[0]->variants->mp4->source->url)) {
+                                $obj->type = "video";
+                            } else {
+                                $obj->type = "photo";
+                            }
                             break;
                         case "gallery":
                             $obj->type = "gallery";
                             break;
                         case "link":
-                            if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
+                            if (isset($post->data->preview->reddit_video_preview->fallback_url) || isset($post->data->preview->images[0]->variants->mp4->source->url)) {
                                 $obj->type = "video";
                             } elseif (isset($post->data->preview->images[0]->source->url)) {
                                 $obj->type = "photo";
@@ -167,6 +171,8 @@ if (isset($_GET) && count($_GET)) {
                         }
                         if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
                             $obj->src = $post->data->preview->reddit_video_preview->fallback_url;
+                        } elseif (isset($post->data->preview->images[0]->variants->mp4->source->url)) {
+                            $obj->src = $post->data->preview->images[0]->variants->mp4->source->url;
                         } else {
                             $obj->type = "photo";
                             $obj->src = $obj->preview;
