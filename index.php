@@ -144,7 +144,7 @@ if (isset($_GET) && count($_GET)) {
 
                 switch ($obj->type) {
                     case "photo":
-                        $obj->src = !isset($preview) ? $post->data->url : $post->data->preview->images[0]->source->url;
+                        $obj->src = isset($preview) ? $post->data->preview->images[0]->source->url : $post->data->url;
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
