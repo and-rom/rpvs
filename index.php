@@ -115,8 +115,9 @@ if (isset($_GET) && count($_GET)) {
 
                 $obj->name = $post->data->name;
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
+                $obj->url = $post->data->permalink;
                 $obj->subreddit = $post->data->subreddit;
-                $obj->url = '/'.$post->data->subreddit_name_prefixed.'/';
+                $obj->subreddit_url = '/'.$post->data->subreddit_name_prefixed.'/';
                 $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
                 $obj->parent_url = !empty($post->data->crosspost_parent_list) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
                 $obj->author = $post->data->author;
@@ -438,7 +439,7 @@ if (isset($_GET) && count($_GET)) {
                     },
                     displayPostInfo: function () {
                         $("#title").html(this.slides[this.currentSlide].title).show();
-                        $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].url).show();
+                        $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].subreddit_url).show();
                         if (this.slides[this.currentSlide].parent != "") {
                             $("#parent span").html(this.slides[this.currentSlide].parent)
                             $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url).show();
@@ -844,6 +845,10 @@ if (isset($_GET) && count($_GET)) {
                     $("#help").hide();
                     $("#back").show();
                     if (layouts.length > 2) $("#home").show();
+                });
+                $("#open-post").on('click',function (e){
+                    if (typeof currentLayout.slides[currentLayout.currentSlide].url !== 'undefined' && currentLayout.slides[currentLayout.currentSlide].url !== '')
+                        window.open('https://reddit.com' + currentLayout.slides[currentLayout.currentSlide].url);
                 });
                 $("#home, #back, #sidebar-home").on('click', function (e) {
                     if (layouts.length <= 1) return;
@@ -1704,6 +1709,11 @@ if (isset($_GET) && count($_GET)) {
                     </svg>
                     </label>
                 </div>
+
+                <svg id="open-post" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                    <path d="M 69.230769,8.9743398 V 20.352545 C 52.362308,24.638186 28.322436,36.108955 20.512821,60.256429 40.027692,43.130622 67.62,44.996455 69.230769,45.072096 v 11.37818 L 100,32.732353 Z M 5.1282051,16.666647 C 2.4432051,16.666917 2.5641026e-4,19.109801 0,21.794853 v 64.102602 c 2.5641026e-4,2.685 2.4432051,5.127949 5.1282051,5.128205 H 71.794872 c 2.685,-2.56e-4 5.127949,-2.443205 5.128205,-5.128205 V 56.971173 l -4.567308,3.525641 -5.689102,4.407051 V 80.76925 H 10.25641 V 26.923058 h 30.889487 c 7.50218,-4.802372 15.465129,-8.103911 22.596154,-10.256411 z"/>
+                </svg>
+
                 <svg id="fullscreen" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100"  width="100%" height="100%">
                     <polygon style="" points="85.669,76.831 71.338,62.5 62.5,71.338 76.831,85.669 62.5,100 100,100 100,62.5 "/>
                     <polygon style="" points="37.5,71.338 28.662,62.5 14.331,76.831 0,62.5 0,100 37.5,100 23.169,85.669 "/>
