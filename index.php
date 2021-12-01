@@ -149,6 +149,22 @@ if (isset($_GET) && count($_GET)) {
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
+                        if ($obj->domain == "redgifs.com") {
+                            $parts=explode('/', $post->data->url);
+                            if ($redgifs = file_get_contents('https://api.redgifs.com/v2/gifs/'.end($parts))) {
+                                if ($redgifs = json_decode($redgifs)) {
+                                    if (isset($redgifs->gif->urls->hd)) {
+                                        $obj->src = $redgifs->gif->urls->hd;
+                                        $response->posts[] = clone $obj;
+                                        break;
+                                    } elseif (isset($redgifs->gif->urls->sd)) {
+                                        $obj->src = $redgifs->gif->urls->sd;
+                                        $response->posts[] = clone $obj;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                         if (isset($post->data->preview->reddit_video_preview->fallback_url)) {
                             $obj->src = $post->data->preview->reddit_video_preview->fallback_url;
                         } else {
