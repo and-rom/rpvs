@@ -91,7 +91,7 @@ if (isset($_GET) && count($_GET)) {
                             } elseif (isset($post->data->preview->images[0]->source->url)) {
                                 $obj->type = "photo";
                                 $preview = 1;
-                            } else{
+                            } else {
                                 $obj->type = "link";
                             }
                             break;
@@ -194,6 +194,7 @@ if (isset($_GET) && count($_GET)) {
                         }
                         break;
                 }
+                unset($preview);
             }
 
             $response->after = isset($apiResponse->data->after) ? $apiResponse->data->after : isset($last_name) ? $last_name : "";
