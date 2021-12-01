@@ -904,33 +904,34 @@ if (isset($_GET) && count($_GET)) {
                     $("#sort-period").hide();
                 });
                 $("#sort-order li").on('click', function (e) {
-                    currentLayout.sort = this.id.split("-")[1];
-                    currentLayout.sortPeriod = "";
+                    if (["sort-best", "sort-hot", "sort-new","sort-rising"].includes(this.id)) {
+                        currentLayout.sort = this.id.split("-")[1];
+                        currentLayout.sortPeriod = "";
+                        currentLayout.after = "";
+                        currentLayout.currentSlide = 0;
+                        currentLayout.updateLocked = false;
+                        currentLayout.slides = [];
+                        $("#help").hide();
+                        $("#sort-menu").hide();
+                        $("#sidebar").hide();
+                        currentLayout.save();
+                        currentLayout.displayHeaderInfo();
+                        currentLayout.clearPostInfo();
+                        currentLayout.update();
+                    }
+                    if (["sort-controversial", "sort-top"].includes(this.id)) {
+                        $("#sort-order").hide();
+                        $("#sort-period li").data("order", this.id.split("-")[1]);
+                        $("#sort-period").show();
+                    }
+                });
+                $("#sort-period li").on('click', function (e) {
+                    currentLayout.sort = $(this).data("order");
+                    currentLayout.sortPeriod = this.id.split("-")[1];
                     currentLayout.after = "";
                     currentLayout.currentSlide = 0;
                     currentLayout.updateLocked = false;
                     currentLayout.slides = [];
-                    switch (this.id) {
-                        case "sort-best":
-                        case "sort-hot":
-                        case "sort-new":
-                        case "sort-rising":
-                            $("#sort-menu").hide();
-                            $("#sidebar").hide();
-                            currentLayout.save();
-                            currentLayout.displayHeaderInfo();
-                            currentLayout.clearPostInfo();
-                            currentLayout.update();
-                            break;
-                        case "sort-controversial":
-                        case "sort-top":
-                            $("#sort-order").hide();
-                            $("#sort-period").show();
-                            break;
-                    }
-                });
-                $("#sort-period li").on('click', function (e) {
-                    currentLayout.sortPeriod = this.id.split("-")[1];
                     $("#help").hide();
                     $("#sort-menu").hide();
                     $("#sidebar").hide();
