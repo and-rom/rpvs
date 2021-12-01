@@ -813,6 +813,10 @@ if (isset($_GET) && count($_GET)) {
                 });
 
                 $("#content").on('click', function (e) {
+                    if ($("#help").is(":visible")) {
+                        $("#help").hide();
+                        return;
+                    }
                     if ($("#sort-menu").is(":visible")) {
                         $("#sort-menu").hide();
                         return;
@@ -837,6 +841,7 @@ if (isset($_GET) && count($_GET)) {
                     $("#type-" + currentLayout.type).prop('checked', true);
                     $("#sidebar").hide();
                     $("#sort-menu").hide();
+                    $("#help").hide();
                     $("#back").show();
                     if (layouts.length > 2) $("#home").show();
                 });
@@ -861,6 +866,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.display();
                     $("#sidebar").hide();
                     $("#sort-menu").hide();
+                    $("#help").hide();
                     if (layouts.length < 3) $("#home").hide();
                     if (layouts.length == 1) $("#back").hide();
                 });
@@ -868,6 +874,7 @@ if (isset($_GET) && count($_GET)) {
                     $("#sidebar").toggle();
                     $("#search").focus()
                     $("#sort-menu").hide();
+                    $("#help").hide();
                 });
                 $("#sort").on('click', function (e) {
                     $("#sort-menu").toggle();
@@ -903,6 +910,7 @@ if (isset($_GET) && count($_GET)) {
                 });
                 $("#sort-period li").on('click', function (e) {
                     currentLayout.sortPeriod = this.id.split("-")[1];
+                    $("#help").hide();
                     $("#sort-menu").hide();
                     $("#sidebar").hide();
                     currentLayout.save();
@@ -912,6 +920,9 @@ if (isset($_GET) && count($_GET)) {
                 });
                 $("#close").on('click', function (e) {
                     $("#sidebar").hide();
+                });
+                $("#help").on('click', function (e) {
+                    $("#help").hide();
                 });
                 $("#fullscreen").on('click', function (e) {
                     var requestFullScreen = document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullScreen || document.documentElement.msRequestFullscreen;
@@ -1021,10 +1032,10 @@ if (isset($_GET) && count($_GET)) {
                             // author
                             $("#author").click();
                             break;
-                        case 70: // 'f'
+                        /*case 70: // 'f'
                             // follow
                             $("#follow").click();
-                            break;
+                            break;*/
                         case 78: // 'n'
                             // photo
                             $("#type-photo").trigger('click');
@@ -1036,21 +1047,23 @@ if (isset($_GET) && count($_GET)) {
                             // video
                             $("#type-video").trigger('click');
                             break;
-                        case 84: // 't'
+                        case 79: // 'o'
                             // open post
                             $("#open-post").click();
                             break;
-                        case 76: // 'l'
+                        /*case 76: // 'l'
                             // like post
                             $("#like-post").click();
-                            break;
+                            break;*/
                         case 32: // space
                             $("#content").click();
                             break;
                         case 67: // 'c'
+                            //ff
                             currentLayout.seek(1);
                             break;
                         case 90: // 'z'
+                            //rew
                             currentLayout.seek(-1);
                             break;
                         case 220: // '\'
@@ -1059,6 +1072,7 @@ if (isset($_GET) && count($_GET)) {
                             setMessage("Stealth mode " + (stealthMode ? "enabled" : "disabled"));
                             break;
                         case 192: // '`'
+                            // boss key
                             if (stealthMode) {
                                 $('body').toggle();
                                 keyHidden = $('body').is(":hidden");
@@ -1068,9 +1082,15 @@ if (isset($_GET) && count($_GET)) {
                             }
                             break;
                         case 77: // 'm'
+                            // mute
                             currentLayout.muteToggle();
                             break;
+                        case 72: // 'h'
+                            // help
+                            $('#help').toggle();
+                            break;
                         case 73: // 'i'
+                            // test
                             currentLayout.test();
                             break;
                         default:
@@ -1491,7 +1511,7 @@ if (isset($_GET) && count($_GET)) {
                 vertical-align: middle;
             }
 
-            #sort-menu {
+            #sort-menu, #help {
                 position: fixed;
                 left: 50%;
                 top: 50%;
@@ -1521,6 +1541,35 @@ if (isset($_GET) && count($_GET)) {
 
             #sort-menu .svg-icon {
                 margin-right: 1rem;
+            }
+
+            #help {
+                display: none;
+                width: 25rem;
+            }
+
+            #help dl {
+                padding-top: 1rem;
+            }
+
+            #help dl dt {
+                float: left;
+                width: 8rem;
+            }
+
+            #help dl dd {
+                margin-bottom: 1rem;
+            }
+
+            #help dl dt span {
+                border: 1px solid white;
+                border-radius: 2px;
+                padding: 3px;
+                font-family: monospace;
+                font-size: 0.9rem;
+                background-color: darkgray;
+                color: black;
+                margin-left: 5px;
             }
 
             #loader {
@@ -1757,6 +1806,29 @@ if (isset($_GET) && count($_GET)) {
             </ul>
         </div>
         <svg style="display:none">
+        <div id="help" style="">
+            <dl>
+              <dt><span>a</span><span>left</span></dt><dd>Go to prev slide</dd>
+              <dt><span>d</span><span>right</span></dt><dd>Go to next slide</dd>
+              <dt><span>q</span></dt><dd>Go to front page</dd>
+              <dt><span>w</span></dt><dd>Go back</dd>
+              <dt><span>e</span></dt><dd>Go to subreddit</dd>
+              <dt><span>s</span></dt><dd>Go to parent subreddit</dd>
+              <dt><span>x</span></dt><dd>Go to author</dd>
+              <dt><span>n</span></dt><dd>Switch type to photo</dd>
+              <dt><span>b</span></dt><dd>Switch type to photo and video</dd>
+              <dt><span>v</span></dt><dd>Switch type to video</dd>
+              <dt><span>o</span></dt><dd>Open post</dd>
+              <dt><span>space</span></dt><dd>Hide header</dd>
+              <dt><span>c</span></dt><dd>Fast forward for video</dd>
+              <dt><span>z</span></dt><dd>Rewind for video</dd>
+              <dt><span>\</span></dt><dd>Toggle stealth mode</dd>
+              <dt><span>`</span></dt><dd>Boss key</dd>
+              <dt><span>m</span></dt><dd>Mute video</dd>
+              <dt><span>h</span></dt><dd>Toggle this help</dd>
+              <dt><span>i</span></dt><dd>Test</dd>
+            </dl>
+        </div>
             <svg id="error-icon">
                 <svg viewBox="0 0 253 253" x="0px" y="0px" width="100%" height="100%">
                     <polygon points="86,127 0,41 41,0 127,86 213,0 253,41 167,127 253,213 213,253 127,167 41,253 0,213 "/>
