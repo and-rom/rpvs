@@ -788,6 +788,7 @@ if (isset($_GET) && count($_GET)) {
                     } else {
                         layouts.push(currentLayout);
                     }
+                    currentLayout.clearPostInfo();
                     currentLayout.update(true);
                     currentLayout.displayHeaderInfo();
                     currentLayout.save();
