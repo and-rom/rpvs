@@ -1898,7 +1898,7 @@ if (isset($_GET) && count($_GET)) {
                 <path d="M88.8,77.5L60.6,49.3l28.2-28.2c1.2-1.2,1.2-3.1,0-4.2l-8.5-8.5L50,38.7L19.6,8.3l-8.5,8.5c-1.2,1.2-1.2,3.1,0,4.2  l28.2,28.2L11.2,77.5c-1.2,1.2-1.2,3.1,0,4.2l8.5,8.5L50,59.9l30.4,30.4l8.5-8.5C90,80.6,90,78.7,88.8,77.5z"/>
             </svg>
             <div class="sidebar-container">
-                <input id="search" placeholder="Search..." type="text" />
+                <input id="search" placeholder="Search..." type="text" autocomplete="off" />
                 <ul id="h">
                     <li id="sidebar-home" class="home">
                         <svg class="svg-icon" viewBox="0 0 100 100" version="1.1" x="0px" y="0px" width="100%" height="100%">
