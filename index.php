@@ -43,7 +43,7 @@ if (isset($_GET) && count($_GET)) {
         }
 
     $options['raw_json'] = 1;
-    $options['limit'] = isset($_GET['limit']) ? $_GET['limit'] : 20;;
+    $options['limit'] = isset($_GET['limit']) ? $_GET['limit'] : 20;
     switch ($action) {
         case "feed":
         case "sr":
