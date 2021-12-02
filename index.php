@@ -109,6 +109,10 @@ if (isset($_GET) && count($_GET)) {
                     }
                 } elseif (isset($post->data->is_gallery) && $post->data->is_gallery) {
                     $obj->type = "gallery";
+                } elseif (substr_compare($post->data->url, "mp4", -strlen("mp4")) === 0) {
+                    $obj->type = "video_url";
+                } elseif (substr_compare($post->data->url, "jpg", -strlen("jpg")) === 0) {
+                    $obj->type = "photo";
                 } elseif (isset($post->data->domain) && $post->data->domain == "i.redd.it") {
                     $obj->type = "photo";
                 } elseif (!empty($post->data->crosspost_parent_list) && !isset($post->data->rpvs_dup)) {
@@ -213,6 +217,12 @@ if (isset($_GET) && count($_GET)) {
                             $obj->src = $obj->preview;
                             $obj->type = "photo";
                         }
+                        $response->posts[] = clone $obj;
+                        break;
+                    case "video_url":
+                        if ($type != "all" && $type != "video") break;
+                        $obj->src = $obj->url;
+                        $obj->type = "video";
                         $response->posts[] = clone $obj;
                         break;
                     case "gallery":
