@@ -163,7 +163,7 @@ if (isset($_GET) && count($_GET)) {
 
                 $obj->name = $post->data->name;
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
-                $obj->url = $post->data->permalink;
+                $obj->link = $post->data->permalink;
                 $obj->subreddit = $post->data->subreddit;
                 $obj->subreddit_url = '/'.$post->data->subreddit_name_prefixed.'/';
                 $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
@@ -969,8 +969,8 @@ if (isset($_GET) && count($_GET)) {
                     if (layouts.length > 2) $("#home").show();
                 });
                 $("#open-post").on('click',function (e){
-                    if (typeof currentLayout.slides[currentLayout.currentSlide].url !== 'undefined' && currentLayout.slides[currentLayout.currentSlide].url !== '')
-                        window.open('https://reddit.com' + currentLayout.slides[currentLayout.currentSlide].url);
+                    if (typeof currentLayout.slides[currentLayout.currentSlide].link !== 'undefined' && currentLayout.slides[currentLayout.currentSlide].link !== '')
+                        window.open('https://reddit.com' + currentLayout.slides[currentLayout.currentSlide].link);
                 });
                 $("#home, #back, #sidebar-home").on('click', function (e) {
                     if (layouts.length <= 1) return;
