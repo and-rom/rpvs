@@ -161,9 +161,6 @@ if (isset($_GET) && count($_GET)) {
                     $obj->type = "unknown";
                 }
 
-                if ((isset($_GET['type']) && $_GET['type'] != 'all' && $_GET['type'] != $obj->type && !($obj->type == "photo" && $_GET['type'] == "video" && substr_compare($post->data->url, "gif", -strlen("gif")) === 0)) || $obj->type == "unknown" || $obj->type == "link")
-                    continue;
-
                 $obj->name = $post->data->name;
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
                 $obj->url = $post->data->permalink;
@@ -196,10 +193,12 @@ if (isset($_GET) && count($_GET)) {
 
                 switch ($obj->type) {
                     case "photo":
+                        if ($type != "all" && $type != "photo") break;
                         $obj->src = isset($preview) ? $post->data->preview->images[0]->source->url : $post->data->url;
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
+                        if ($type != "all" && $type != "video") break;
                         if ($obj->domain == "redgifs.com") {
                             if ($redgifs = file_get_contents('https://api.redgifs.com/v2/gifs/'.end($parts))) {
                             $parts=explode('/', $obj->url);
@@ -271,12 +270,15 @@ if (isset($_GET) && count($_GET)) {
                         foreach ($post->data->gallery_data->items as $item) {
                             if ($post->data->media_metadata->{$item->media_id}->status == 'valid') {
                                 if (isset($post->data->media_metadata->{$item->media_id}->s->mp4)) {
+                                    if ($type != "all" && $type != "video") continue;
                                     $obj->src = $post->data->media_metadata->{$item->media_id}->s->mp4;
                                     $obj->type = "video";
                                 } elseif (isset($post->data->media_metadata->{$item->media_id}->s->gif)) {
+                                    if ($type != "all" && $type != "photo") continue;
                                     $obj->src = $post->data->media_metadata->{$item->media_id}->s->gif;
                                     $obj->type = "photo";
                                 } elseif (isset($post->data->media_metadata->{$item->media_id}->s->u)) {
+                                    if ($type != "all" && $type != "photo") continue;
                                     $obj->src = $post->data->media_metadata->{$item->media_id}->s->u;
                                     $obj->type = "photo";
                                 } else {
