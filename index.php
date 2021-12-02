@@ -74,7 +74,8 @@ if (isset($_GET) && count($_GET)) {
             $content = (string) $apiResponse->getBody();
             $apiResponse = json_decode($content);
             $response->posts = [];
-            foreach ($apiResponse->data->children as $post) {
+            for ($idx = 0; $idx < sizeof($apiResponse->data->children); ++$idx) {
+                $post = $apiResponse->data->children[$idx];
                 $last_name = $post->data->name;
                 $obj = new stdClass;
                 if (isset($post->data->post_hint)) {
