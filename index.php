@@ -609,17 +609,17 @@ if (isset($_GET) && count($_GET)) {
                     displayPhoto: function () {
                         this.iframe = new Image();
                         this.iframe.src = this.slides[this.currentSlide].src;
-                        var _this = this;
+                        var that = this;
                         this.iframe.onerror = function () {
                             $('#content').empty().append($(".svg-container #error-icon").clone());
                             setMessage("Load error");
-                            _this.unlock();
+                            that.unlock();
                         };
                         this.iframe.onload = function () {
                             $('#content').empty();
                             $(this).appendTo('#content').attr('id', "photo").addClass("photo");
-                            _this.resize();
-                            _this.unlock();
+                            that.resize();
+                            that.unlock();
                         };
                     },
                     displayVideo: function () {
@@ -642,22 +642,22 @@ if (isset($_GET) && count($_GET)) {
                         $(this.iframe).prop("muted", videoMuted);
                         $(this.iframe).prop("preload", "none");
 
-                        var _this = this;
+                        var that = this;
                         var img = new Image();
                         img.src = this.slides[this.currentSlide].preview;
                         img.onload = function () {
-                            _this.unlock(false);
+                            this.unlock(false);
                         };
 
                         $(this.iframe).find('source').last().on('error', function (e) {
                             $("#content").empty().append($(".svg-container #error-icon").clone());
-                            _this.unlock();
+                            this.unlock();
                         });
-                        $(this.iframe).on("play", function (e) {
-                                _this.unlock();
-                                if (_this.iframe[0].mozHasAudio ||
-                                    Boolean(_this.iframe[0].webkitAudioDecodedByteCount) ||
-                                    Boolean(_this.iframe[0].audioTracks && _this.iframe[0].audioTracks.length)) {
+                        $(this.iframe).on("play", function () {
+                                that.unlock();
+                                if (this.mozHasAudio ||
+                                    Boolean(this.webkitAudioDecodedByteCount) ||
+                                    Boolean(this.audioTracks && this.audioTracks.length)) {
                                     $("#content").append($(".svg-container #unmute-icon").clone().addClass("badge"));
                                 } else{
                                     $("#content").append($(".svg-container #mute-icon").clone().addClass("badge"));
@@ -667,7 +667,7 @@ if (isset($_GET) && count($_GET)) {
                                 $("#loader").show();
                             })
                             .on('loadeddata', function (event) {
-                                _this.iframe[0].play();
+                                this.play();
                             })
                             .on('seeking', function (event) {
                                 $("#loader").show();
