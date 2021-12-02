@@ -111,6 +111,41 @@ if (isset($_GET) && count($_GET)) {
                     $obj->type = "gallery";
                 } elseif (isset($post->data->domain) && $post->data->domain == "i.redd.it") {
                     $obj->type = "photo";
+                } elseif (!empty($post->data->crosspost_parent_list) && !isset($post->data->rpvs_dup)) {
+                    $tmp['name'] = $post->data->name;
+                    $tmp['permalink'] = $post->data->permalink;
+                    $tmp['subreddit'] = $post->data->subreddit;
+                    $tmp['subreddit_name_prefixed'] = $post->data->subreddit_name_prefixed;
+                    $tmp['crosspost_parent_list'] = $post->data->crosspost_parent_list;
+                    $tmp['author'] = $post->data->author;
+                    $tmp['locked'] = $post->data->locked;
+                    $tmp['link_flair_text'] = $post->data->link_flair_text;
+                    $tmp['link_flair_text_color'] = $post->data->link_flair_text_color;
+                    $tmp['link_flair_background_color'] = $post->data->link_flair_background_color;
+                    $tmp['created'] = $post->data->created;
+                    $tmp['score'] = $post->data->score;
+                    $tmp['num_comments'] = $post->data->num_comments;
+                    $tmp['all_awardings'] = $post->data->all_awardings;
+                    $tmp['total_awards_received'] = $post->data->total_awards_received;
+                    $apiResponse->data->children[$idx]->data = clone $post->data->crosspost_parent_list[0];
+                    $apiResponse->data->children[$idx]->data->name = $tmp['name'];
+                    $apiResponse->data->children[$idx]->data->permalink = $tmp['permalink'];
+                    $apiResponse->data->children[$idx]->data->subreddit = $tmp['subreddit'];
+                    $apiResponse->data->children[$idx]->data->subreddit_name_prefixed = $tmp['subreddit_name_prefixed'];
+                    $apiResponse->data->children[$idx]->data->crosspost_parent_list = $tmp['crosspost_parent_list'];
+                    $apiResponse->data->children[$idx]->data->author = $tmp['author'];
+                    $apiResponse->data->children[$idx]->data->locked = $tmp['locked'];
+                    $apiResponse->data->children[$idx]->data->link_flair_text = $tmp['link_flair_text'];
+                    $apiResponse->data->children[$idx]->data->link_flair_text_color = $tmp['link_flair_text_color'];
+                    $apiResponse->data->children[$idx]->data->link_flair_background_color = $tmp['link_flair_background_color'];
+                    $apiResponse->data->children[$idx]->data->created = $tmp['created'];
+                    $apiResponse->data->children[$idx]->data->score = $tmp['score'];
+                    $apiResponse->data->children[$idx]->data->num_comments = $tmp['num_comments'];
+                    $apiResponse->data->children[$idx]->data->all_awardings = $tmp['all_awardings'];
+                    $apiResponse->data->children[$idx]->data->total_awards_received = $tmp['total_awards_received'];
+                    $apiResponse->data->children[$idx]->data->rpvs_dup = true;
+                    $idx--;
+                    continue;
                 } else {
                     $obj->type = "unknown";
                 }
