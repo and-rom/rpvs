@@ -154,8 +154,8 @@ if (isset($_GET) && count($_GET)) {
                         break;
                     case "video":
                         if ($obj->domain == "redgifs.com") {
-                            $parts=explode('/', $post->data->url);
                             if ($redgifs = file_get_contents('https://api.redgifs.com/v2/gifs/'.end($parts))) {
+                            $parts=explode('/', $obj->url);
                                 if ($redgifs = json_decode($redgifs)) {
                                     if (isset($redgifs->gif->urls->hd)) {
                                         $obj->src = $redgifs->gif->urls->hd;
@@ -174,8 +174,8 @@ if (isset($_GET) && count($_GET)) {
                         } elseif (isset($post->data->preview->images[0]->variants->mp4->source->url)) {
                             $obj->src = $post->data->preview->images[0]->variants->mp4->source->url;
                         } else {
-                            $obj->type = "photo";
                             $obj->src = $obj->preview;
+                            $obj->type = "photo";
                         }
                         $response->posts[] = clone $obj;
                         break;
@@ -713,6 +713,7 @@ if (isset($_GET) && count($_GET)) {
                         console.log("this.currentSlide: " + this.currentSlide);
                         console.log("this.slides.length: " + this.slides.length);
                         console.log("this.slides");
+                        console.log(this.slides[this.currentSlide]);
                         console.log(this.slides);
                         console.log(layoutParams);
                     }
