@@ -164,6 +164,7 @@ if (isset($_GET) && count($_GET)) {
                 $obj->name = $post->data->name;
                 $obj->title = isset($post->data->title) ? $post->data->title : "" ;
                 $obj->link = $post->data->permalink;
+                $obj->url = $post->data->url;
                 $obj->subreddit = $post->data->subreddit;
                 $obj->subreddit_url = '/'.$post->data->subreddit_name_prefixed.'/';
                 $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
