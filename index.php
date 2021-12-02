@@ -93,6 +93,8 @@ if (isset($_GET) && count($_GET)) {
                         case "link":
                             if (isset($post->data->preview->reddit_video_preview->fallback_url) || isset($post->data->preview->images[0]->variants->mp4->source->url)) {
                                 $obj->type = "video";
+                            } elseif (($post->data->domain == "imgur.com" || $post->data->domain == "m.imgur.com") && isset($post->data->media->oembed->thumbnail_url)) {
+                                $obj->type = "video_thumbnail";
                             } elseif (isset($post->data->preview->images[0]->source->url)) {
                                 $obj->type = "photo";
                                 $preview = 1;
@@ -223,6 +225,24 @@ if (isset($_GET) && count($_GET)) {
                         if ($type != "all" && $type != "video") break;
                         $obj->src = $obj->url;
                         $obj->type = "video";
+                        $response->posts[] = clone $obj;
+                        break;
+                    case "video_thumbnail":
+                        if ($type != "all" && $type != "video") break;
+                        if ($url = parse_url($post->data->media->oembed->thumbnail_url)) {
+                            if ($type != "all" && $type != "video") break;
+                            $url = sprintf('%s://%s%s', $url['scheme'], $url['host'], str_replace("jpg", "mp4", $url['path']));
+                            if (get_headers($url)[0] == "HTTP/1.1 200 OK") {
+                                $obj->src = $url;
+                                $obj->type = "video";
+                                $response->posts[] = clone $obj;
+                                break;
+                            }
+
+                        }
+                        $obj->src = $obj->preview;
+                        $obj->external = true;
+                        $obj->type = "photo";
                         $response->posts[] = clone $obj;
                         break;
                     case "gallery":
