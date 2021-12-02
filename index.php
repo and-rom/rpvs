@@ -93,6 +93,8 @@ if (isset($_GET) && count($_GET)) {
                         case "link":
                             if (isset($post->data->preview->reddit_video_preview->fallback_url) || isset($post->data->preview->images[0]->variants->mp4->source->url)) {
                                 $obj->type = "video";
+                            } elseif (substr_compare($post->data->url, "gifv", -strlen("gifv")) === 0) {
+                                $obj->type = "imgur_media";
                             } elseif (($post->data->domain == "imgur.com" || $post->data->domain == "m.imgur.com") && isset($post->data->media->oembed->thumbnail_url)) {
                                 $obj->type = "video_thumbnail";
                             } elseif (isset($post->data->preview->images[0]->source->url)) {
