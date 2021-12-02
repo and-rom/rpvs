@@ -84,6 +84,8 @@ if (isset($_GET) && count($_GET)) {
                         case "image":
                             if (isset($post->data->preview->images[0]->variants->mp4->source->url)) {
                                 $obj->type = "video";
+                            } elseif ($post->data->domain != "reddit.com" || $post->data->domain != "i.reddit.com") {
+                                $obj->type = "photo_preview";
                             } else {
                                 $obj->type = "photo";
                             }
