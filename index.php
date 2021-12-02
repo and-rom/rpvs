@@ -650,12 +650,12 @@ if (isset($_GET) && count($_GET)) {
                         var img = new Image();
                         img.src = this.slides[this.currentSlide].preview;
                         img.onload = () => {
-                            this.unlock(false);
+                            that.unlock(false);
                         };
 
                         $(this.iframe).find('source').last().on('error', () => {
                             $("#content").empty().append($(".svg-container #error-icon").clone());
-                            this.unlock();
+                            that.unlock();
                         });
                         $(this.iframe).on("play", function () {
                                 that.unlock();
