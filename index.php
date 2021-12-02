@@ -299,7 +299,7 @@ if (isset($_GET) && count($_GET)) {
                 }
             }
 
-            $response->after = isset($apiResponse->data->after) ? $apiResponse->data->after : isset($last_name) ? $last_name : "";
+            $response->after = (isset($post->data->removed_by) || isset($post->data->removed_by_category)) && $apiResponse->data->after == $last_name ? $apiResponse->data->children[$idx-2]->data->name : isset($apiResponse->data->after) ? $apiResponse->data->after : isset($last_name) ? $last_name : "";
             $response->code = 200;
             break;
         case "srs":
