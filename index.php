@@ -49,6 +49,7 @@ if (isset($_GET) && count($_GET)) {
         case "sr":
         case "mr":
         case "u":
+            $type = isset($_GET['type']) ? $_GET['type'] : "all";
             $path = isset($_GET['path']) ? $_GET['path'] : "/";
             if ($action == "u") {
                 $options['sort'] = isset($_GET['sort']) ? $_GET['sort'] : "";
