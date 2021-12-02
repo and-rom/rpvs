@@ -99,8 +99,7 @@ if (isset($_GET) && count($_GET)) {
                             } elseif (($post->data->domain == "imgur.com" || $post->data->domain == "m.imgur.com") && isset($post->data->media->oembed->thumbnail_url)) {
                                 $obj->type = "video_thumbnail";
                             } elseif (isset($post->data->preview->images[0]->source->url)) {
-                                $obj->type = "photo";
-                                $preview = 1;
+                                $obj->type = "photo_preview";
                             } else {
                                 $obj->type = "link";
                             }
@@ -196,9 +195,11 @@ if (isset($_GET) && count($_GET)) {
 
                 switch ($obj->type) {
                     case "photo":
+                    case "photo_preview":
                         if ($type != "all" && $type != "photo") break;
-                        $obj->src = isset($preview) ? $post->data->preview->images[0]->source->url : $post->data->url;
+                        $obj->src = $obj->type == "photo_preview" ? $obj->preview : $obj->url;
                         $obj->external = $obj->type == "photo_preview" ? true : false;
+                        $obj->type = "photo";
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
@@ -294,7 +295,6 @@ if (isset($_GET) && count($_GET)) {
                         }
                         break;
                 }
-                unset($preview);
             }
 
             $response->after = isset($apiResponse->data->after) ? $apiResponse->data->after : isset($last_name) ? $last_name : "";
