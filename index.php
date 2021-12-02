@@ -117,6 +117,8 @@ if (isset($_GET) && count($_GET)) {
                     $obj->type = "photo";
                 } elseif (isset($post->data->domain) && $post->data->domain == "i.redd.it") {
                     $obj->type = "photo";
+                } elseif (isset($post->data->domain) && $post->data->domain == "imgur.com" && !isset($post->data->preview)) {
+                    $obj->type = "imgur_media";
                 } elseif (!empty($post->data->crosspost_parent_list) && !isset($post->data->rpvs_dup)) {
                     $tmp['name'] = $post->data->name;
                     $tmp['permalink'] = $post->data->permalink;
@@ -244,6 +246,22 @@ if (isset($_GET) && count($_GET)) {
                         $obj->external = true;
                         $obj->type = "photo";
                         $response->posts[] = clone $obj;
+                        break;
+                    case "imgur_media":
+                        if ($url = parse_url($obj->url)) {
+                            $url = sprintf('%s://%s%s', $url['scheme'], $url['host'] == "imgur.com" ? "i.".$url['host'] : $url['host'], str_replace(".gifv", "", $url['path']));
+                            if (get_headers($url.".mp4")[0] == "HTTP/1.1 200 OK") {
+                                if ($type != "all" && $type != "video") break;
+                                $obj->src = $url.".mp4";
+                                $obj->type = "video";
+                                $response->posts[] = clone $obj;
+                            } elseif (get_headers($url.".jpg")[0] == "HTTP/1.1 200 OK") {
+                                if ($type != "all" && $type != "photo") break;
+                                $obj->src = $url.".mp4";
+                                $obj->type = "photo";
+                                $response->posts[] = clone $obj;
+                            }
+                        }
                         break;
                     case "gallery":
                         if (!isset($post->data->gallery_data->items)) break;
