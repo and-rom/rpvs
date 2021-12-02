@@ -192,10 +192,13 @@ if (isset($_GET) && count($_GET)) {
 
                 $obj->preview = isset($post->data->preview->images[0]->source->url) ? $post->data->preview->images[0]->source->url : "";
 
+                $obj->external = false;
+
                 switch ($obj->type) {
                     case "photo":
                         if ($type != "all" && $type != "photo") break;
                         $obj->src = isset($preview) ? $post->data->preview->images[0]->source->url : $post->data->url;
+                        $obj->external = $obj->type == "photo_preview" ? true : false;
                         $response->posts[] = clone $obj;
                         break;
                     case "video":
@@ -222,6 +225,7 @@ if (isset($_GET) && count($_GET)) {
                             $obj->src = $post->data->preview->images[0]->variants->mp4->source->url;
                         } else {
                             $obj->src = $obj->preview;
+                            $obj->external = true;
                             $obj->type = "photo";
                         }
                         $response->posts[] = clone $obj;
