@@ -610,7 +610,7 @@ if (isset($_GET) && count($_GET)) {
                         this.iframe = new Image();
                         this.iframe.src = this.slides[this.currentSlide].src;
                         var that = this;
-                        this.iframe.onerror = function () {
+                        this.iframe.onerror = () => {
                             $('#content').empty().append($(".svg-container #error-icon").clone());
                             setMessage("Load error");
                             that.unlock();
@@ -645,11 +645,11 @@ if (isset($_GET) && count($_GET)) {
                         var that = this;
                         var img = new Image();
                         img.src = this.slides[this.currentSlide].preview;
-                        img.onload = function () {
+                        img.onload = () => {
                             this.unlock(false);
                         };
 
-                        $(this.iframe).find('source').last().on('error', function (e) {
+                        $(this.iframe).find('source').last().on('error', () => {
                             $("#content").empty().append($(".svg-container #error-icon").clone());
                             this.unlock();
                         });
@@ -663,19 +663,19 @@ if (isset($_GET) && count($_GET)) {
                                     $("#content").append($(".svg-container #mute-icon").clone().addClass("badge"));
                                 }
                             })
-                            .on('loadstart', function (event) {
+                            .on('loadstart', () => {
                                 $("#loader").show();
                             })
-                            .on('loadeddata', function (event) {
+                            .on('loadeddata', function () {
                                 this.play();
                             })
-                            .on('seeking', function (event) {
+                            .on('seeking', () => {
                                 $("#loader").show();
                             })
-                            .on('waiting', function (event) {
+                            .on('waiting', () => {
                                 $("#loader").show();
                             })
-                            .on('canplay', function (event) {
+                            .on('canplay', () => {
                                 $("#loader").hide();
                             });
                     },
@@ -792,7 +792,7 @@ if (isset($_GET) && count($_GET)) {
                             $("#content .volume-icon").remove();
                             $("#content").append($(".svg-container #" + (this.iframe[0].muted ? "mute-icon" : "unmute-icon")).clone().addClass("volume-icon"));
 
-                            setTimeout(function () {
+                            setTimeout(() => {
                                 $("#content .volume-icon").remove();
                             }, 800);
                         }
@@ -836,7 +836,7 @@ if (isset($_GET) && count($_GET)) {
                             clearTimeout(messageTimer);
                             messageTimer = 0;
                         }
-                        messageTimer = setTimeout(function () {
+                        messageTimer = setTimeout(() => {
                             $("#messages span." + className).first().remove();
                         }, 2000);
                     }
