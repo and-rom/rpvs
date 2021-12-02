@@ -207,8 +207,8 @@ if (isset($_GET) && count($_GET)) {
                     case "video":
                         if ($type != "all" && $type != "video") break;
                         if ($obj->domain == "redgifs.com") {
-                            if ($redgifs = file_get_contents('https://api.redgifs.com/v2/gifs/'.end($parts))) {
                             $parts=explode('/', $obj->url);
+                            if ($redgifs = @file_get_contents('https://api.redgifs.com/v2/gifs/'.end($parts))) {
                                 if ($redgifs = json_decode($redgifs)) {
                                     if (isset($redgifs->gif->urls->hd)) {
                                         $obj->src = $redgifs->gif->urls->hd;
