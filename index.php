@@ -617,6 +617,10 @@ if (isset($_GET) && count($_GET)) {
                         };
                         this.iframe.onload = function () {
                             $('#content').empty();
+                            if (this.naturalHeight <= 60) {
+                                this.onerror();
+                                return;
+                            }
                             $(this).appendTo('#content').attr('id', "photo").addClass("photo");
                             that.resize();
                             that.unlock();
