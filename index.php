@@ -568,7 +568,7 @@ if (isset($_GET) && count($_GET)) {
                         $("#locked").toggle(this.slides[this.currentSlide].locked);
                         if (this.slides[this.currentSlide].link_flair_text) {
                             $("#flair").empty().append($('<span />', {
-                                style: "background-color: " + (this.slides[this.currentSlide].link_flair_background_color != null | this.slides[this.currentSlide].link_flair_background_color != "" ? this.slides[this.currentSlide].link_flair_background_color : "grey") +
+                                style: "background-color: " + (this.slides[this.currentSlide].link_flair_background_color != null && this.slides[this.currentSlide].link_flair_background_color != "" ? this.slides[this.currentSlide].link_flair_background_color : "grey") +
                                     ";color: " + (this.slides[this.currentSlide].link_flair_text_color == "light" ? "white" : "black"),
                             }).html(this.slides[this.currentSlide].link_flair_text)).show();
                         }
