@@ -1491,6 +1491,7 @@ if (isset($_GET) && count($_GET)) {
             #flair span {
                 padding: 2px;
                 text-shadow: none;
+                border-radius: 5px;
             }
 
             #score {
