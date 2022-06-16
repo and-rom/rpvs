@@ -409,6 +409,11 @@ if (isset($_GET) && count($_GET)) {
         <link rel="icon" href="/img/rpvs16.png" type="image/png">
         <script type="text/javascript" src="js/jquery-3.6.0.min.js"></script>
         <script type="text/javascript">
+            const APP_NAME = 'RPVS';
+            const storageKey = key => `${APP_NAME}.${key}`;
+            const storageSet = (key, value) => localStorage.setItem(storageKey(key), value);
+            const storageGet = key => localStorage.getItem(storageKey(key));
+
             $(document).ready(function () {
                 var currentLayout;
 
@@ -431,11 +436,11 @@ if (isset($_GET) && count($_GET)) {
                     updateLocked: false,
                     // Methods
                     save: function () {
-                        localStorage.setItem('layoutType', this.layoutType);
-                        localStorage.setItem('path', this.path);
-                        localStorage.setItem('sort', this.sort);
-                        localStorage.setItem('sortPeriod', this.sortPeriod);
-                        localStorage.setItem('type', this.type);
+                        storageSet('layoutType', this.layoutType);
+                        storageSet('path', this.path);
+                        storageSet('sort', this.sort);
+                        storageSet('sortPeriod', this.sortPeriod);
+                        storageSet('type', this.type);
                     },
                     update: function (restore = false) {
                         if (this.updateLocked) {
@@ -537,9 +542,9 @@ if (isset($_GET) && count($_GET)) {
                         this.clearPostInfo();
                         this.displayPostInfo();
                         if (this.currentSlide - 1 < 0) {
-                            localStorage.setItem('after', "");
+                            storageSet('after', "");
                         } else {
-                            localStorage.setItem('after', this.slides[this.currentSlide - 1].name);
+                            storageSet('after', this.slides[this.currentSlide - 1].name);
                         }
                     },
                     displayHeaderInfo: function () {
@@ -854,12 +859,12 @@ if (isset($_GET) && count($_GET)) {
                 }
 
                 layoutParams = {
-                    layoutType: localStorage.getItem('layoutType'),
-                    path: localStorage.getItem('path'),
-                    sort: localStorage.getItem('sort'),
-                    sortPeriod: localStorage.getItem('sortPeriod'),
-                    type: localStorage.getItem('type'),
-                    after: localStorage.getItem('after')
+                    layoutType: storageGet('layoutType'),
+                    path: storageGet('path'),
+                    sort: storageGet('sort'),
+                    sortPeriod: storageGet('sortPeriod'),
+                    type: storageGet('type'),
+                    after: storageGet('after')
                 }
 
                 layouts.push({
