@@ -541,9 +541,7 @@ if (isset($_GET) && count($_GET)) {
                         }
                         this.clearPostInfo();
                         this.displayPostInfo();
-                        if (this.currentSlide - 1 < 0) {
-                            storageSet('after', "");
-                        } else {
+                        if (this.currentSlide - 1 >= 0) {
                             storageSet('after', this.slides[this.currentSlide - 1].name);
                         }
                     },
