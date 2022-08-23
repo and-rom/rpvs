@@ -901,7 +901,14 @@ if (isset($_GET) && count($_GET)) {
                 });
 
                 $(document).one('auth', function (e) {
-                    if (typeof layoutParams.after !== 'undefined' ) setMessage("Restore", "restore", "button");
+                    if (
+                        typeof layoutParams.after !== 'undefined' &&
+                        layoutParams.after !== null &&
+                        storageGet('lastVisit') !== null &&
+                        storageGet('lastVisit') - Math.floor(Date.now() / 1000) <= 172800
+                    )
+                        setMessage("Restore", "restore", "button");
+                    storageSet('lastVisit', Math.floor(Date.now() / 1000))
                     var ph = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAAGXRFWHRTb2Z0d2FyZQB3d3cuaW5rc2NhcGUub3Jnm+48GgAABGZJREFUeJztm01sVFUUx3/33MICB6QIxKWtoRihCiQukbjRxLjx25igMUZDYqLCQncCSwshasKGiGGB1cQ1MVU3tnWNtIWE1qgxEss4dUpqE43OPBf3PZwOM/M+7nv3vlp/yUk6ze0953/e67z77j1HUTzbQO+HYBjYCWoIgi3AZqASjvkdWAS1AMEsMAtqChoTQM1BjLmzF+QkyDRIEyTIaE2QKZATwB7fouKogBwBuWwhOM5mQA7z751TCvpBjoMsFCi83WogxzD/Rt5QoF8AmXcovFMi3gDEtfhB0JMehbeZngAGHGnXT4D85l/0LXYD9HNFKheQUyUQGmcnAZW3+PUgH5dAXFI7D6zLUby6UAJRKU1dMLHboUDO+ReT2T6B3k8I3Vu/nAIOZUjcNeAzCH4ENQj0xYyvQzAOahK4AsEPwM+gGphnfdbH3G5QFQi+yPC3+plsWdffAP0tEw2AzHUfqx+jd4I2gT4IMpv9TtBPp1U/CLKYzRn7Osy3C6TRMm4J9Muk+7beYLH2WDSakqEsHNV7TPt5OOYnYHcK4a0MW9wFkyRLuH7J4ktnpvu8cgykCtydUXw0T9UiCS/Gzd4Pct0iAVPdp9YHzSrSFvneIr55er9AyXGLyWMSwG324tkC8rdljEe7TV7B/pW2VwI6sQn0K6C+BPkOZAnkKsg50I+ycjW3HuS8ZXwBSI3O+wlyJIfJ0yTgQZBrMfNVQUZBTocJso0vssOdEpDHTk7SBBwA+StHQWnt5pd1tMLaB9yb4urZ0A/yKfGrwyLZRbjHGCZAnnfnW14H7nTnrxtGc3QHPOzIqwZec+QrjkfAJGAb2VdmaXkg9FcGhoGtYg4t8t9B6YwccOMnEQr0foHgPodO73HoKwHBsAA73DlUlu8BuTMk5qzOFYHXg4xbUTsEgu0OPW5w6CsBwXbB7Tmb9SZlzmx0nYCysdH5mVrZEExxwlpl6f8EgKr6jsIfqiphTc4aJZgVYM53GB6ZE1ONtVZR0wKNr4Gm71A8EEBjQoAF4LLvaDwwBdSihdCYz0g8MQY3t8Saoz4j8YPRHN0BF4Ee53r/Oa4Al4AVhQcf+YnFC2eiH1oS0DzDKi1MTskCNM9GH1rvgGXgtPt4nPM+Le8/ba/DzfeA627jcco8ND9o/UX7fsAiqLcdBuQY9RZwI3aUqb3NfPTcjT6QP/wdiOpxUpx/DIDUszlibxf9D3k8Da4DdyUVH6KfyujsYgdnOzGFD76u/pMpxUfIiYxOl0GNgXwI6iuQPz1e/ZGM4oHVXyo7CvbNFOtWcbF0bhXjfSBn/YtKbLmWy0coTCucb3FxNkKxx/36ccrbMvNsgcJXMFCypqlx0j/nrSlD29wvoF8F921zrWwGOYrp4XMl/FeQd4DbfQpvpwLyJqa9tSjh05hGyTzqjgtlD8gIyCVWNkqktQbItyDvAvcXEaiL6rCtLe3zQ2H7/B2YtproSi4DdVA1COaAq6BmoDGO2bYvjH8AJnU6lSYCwysAAAAASUVORK5CYII="
                     $.ajax({
                         dataType: "json",
