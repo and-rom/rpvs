@@ -856,15 +856,6 @@ if (isset($_GET) && count($_GET)) {
                     return (hh > 0 ? (hh < 10 ? "0" : "") + hh + ":" : "") + (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
                 }
 
-                layoutParams = {
-                    layoutType: storageGet('layoutType'),
-                    path: storageGet('path'),
-                    sort: storageGet('sort'),
-                    sortPeriod: storageGet('sortPeriod'),
-                    type: storageGet('type'),
-                    after: storageGet('after')
-                }
-
                 layouts.push({
                     __proto__: layout$
                 });
@@ -874,6 +865,15 @@ if (isset($_GET) && count($_GET)) {
                 currentLayout.save();
                 currentLayout.displayHeaderInfo();
                 currentLayout.update();
+
+                layoutParams = {
+                    layoutType: storageGet('layoutType'),
+                    path: storageGet('path'),
+                    sort: storageGet('sort'),
+                    sortPeriod: storageGet('sortPeriod'),
+                    type: storageGet('type'),
+                    after: storageGet('after')
+                }
 
                 $(document).on("click", ".restore", function () {
                     $(this).remove();
