@@ -1,12 +1,15 @@
 <?php
-function version() {
+function version($full=true) {
     $major = "1";
     $minor = trim(exec('git rev-list HEAD | wc -l'));
     $hash = trim(exec('git log --pretty="%h" -n1 HEAD'));
     $date = new \DateTime(trim(exec('git log -n1 --pretty=%ci HEAD')));
     $date->setTimezone(new \DateTimeZone('UTC'));
 
-    return sprintf('v%s.%s-%s (%s)', $major, $minor, $hash, $date->format('Y-m-d H:i:s'));
+    if ($full)
+        return sprintf('v%s.%s-%s (%s)', $major, $minor, $hash, $date->format('Y-m-d H:i:s'));
+    else
+        return sprintf('%s.%s-%s', $major, $minor, $hash);
 }
 
 if (isset($_GET) && count($_GET)) {
