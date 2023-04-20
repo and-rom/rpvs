@@ -908,7 +908,7 @@ if (isset($_GET) && count($_GET)) {
                         typeof layoutParams.after !== 'undefined' &&
                         layoutParams.after !== null &&
                         storageGet('lastVisit') !== null &&
-                        storageGet('lastVisit') - Math.floor(Date.now() / 1000) <= 172800
+                        Math.floor(Date.now() / 1000) - storageGet('lastVisit') <= 7200
                     )
                         setMessage("Restore", "restore", "button");
                     storageSet('lastVisit', Math.floor(Date.now() / 1000))
