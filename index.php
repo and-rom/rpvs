@@ -638,10 +638,10 @@ if (isset($_GET) && count($_GET)) {
                             src: this.slides[this.currentSlide].src,
                             type: 'video/mp4',
                             poster: this.slides[this.currentSlide].preview,
-                            loop: ''
+                            loop: '',
+                            style: 'visibility: hidden'
                         }));
                         this.iframe = $('video').first();
-                        this.resize();
 
                         $(this.iframe).removeAttr("controls");
                         $(this.iframe).prop("controls", false);
@@ -664,6 +664,7 @@ if (isset($_GET) && count($_GET)) {
                             that.unlock();
                         });
                         $(this.iframe).on("play", function () {
+                                that.resize();
                                 that.unlock();
                                 if (this.mozHasAudio ||
                                     Boolean(this.webkitAudioDecodedByteCount) ||
@@ -761,7 +762,8 @@ if (isset($_GET) && count($_GET)) {
                             width: newWidth + "px",
                             height: newHeight + "px",
                             top: (wh - newHeight) / 2,
-                            left: (ww - newWidth) / 2
+                            left: (ww - newWidth) / 2,
+                            visibility: 'visible'
                         };
                         $(this.iframe).css(properties);
                     },
