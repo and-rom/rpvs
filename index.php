@@ -831,6 +831,15 @@ if (isset($_GET) && count($_GET)) {
                     console.log("??");
                 };
 
+                var mobile = [/Android/i,
+                              /webOS/i,
+                              /iPhone/i,
+                              /iPad/i,
+                              /iPod/i,
+                              /BlackBerry/i,
+                              /Windows Phone/i].some(agent => navigator.userAgent.match(agent))
+               console.log(mobile);
+
                 var messageTimer;
                 function setMessage(text, className = "", object = "") {
                     if (className != "timer") {
@@ -1025,7 +1034,8 @@ if (isset($_GET) && count($_GET)) {
                 });
                 $("#layout").on('click', function (e) {
                     $("#sidebar").toggle();
-                    $("#search").focus()
+                    if (!mobile)
+                        $("#search").focus()
                     $("#sort-menu").hide();
                     $("#help").hide();
                 });
@@ -1114,13 +1124,7 @@ if (isset($_GET) && count($_GET)) {
                         hided = true;
                     }, 2000);
                 });
-                var stealthMode = !(navigator.userAgent.match(/Android/i) ||
-                    navigator.userAgent.match(/webOS/i) ||
-                    navigator.userAgent.match(/iPhone/i) ||
-                    navigator.userAgent.match(/iPad/i) ||
-                    navigator.userAgent.match(/iPod/i) ||
-                    navigator.userAgent.match(/BlackBerry/i) ||
-                    navigator.userAgent.match(/Windows Phone/i));
+                var stealthMode = !mobile;
                 var videoMuted = true;
                 $(window).on('mouseleave blur focusout', function (e) {
                     e.stopPropagation();
