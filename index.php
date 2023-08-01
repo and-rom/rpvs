@@ -1,15 +1,16 @@
 <?php
 function version($full=true) {
     $major = "1";
-    $minor = trim(exec('git rev-list HEAD | wc -l'));
+    $minor = "4";
+    $commit = trim(exec('git rev-list HEAD'));
     $hash = trim(exec('git log --pretty="%h" -n1 HEAD'));
     $date = new \DateTime(trim(exec('git log -n1 --pretty=%ci HEAD')));
     $date->setTimezone(new \DateTimeZone('UTC'));
 
     if ($full)
-        return sprintf('v%s.%s-%s (%s)', $major, $minor, $hash, $date->format('Y-m-d H:i:s'));
+        return sprintf('v%s.%s.%s-%s (%s)', $major, $minor, $commit, $hash, $date->format('Y-m-d H:i:s'));
     else
-        return sprintf('%s.%s-%s', $major, $minor, $hash);
+        return sprintf('%s.%s.%s-%s', $major, $minor, $commit, $hash);
 }
 
 if (isset($_GET) && count($_GET)) {
@@ -483,7 +484,7 @@ if (isset($_GET) && count($_GET)) {
                                         setMessage("No more posts.");
                                         this.display();
                                     } else {
-                                        this.slides = this.slides.concat(data.posts);
+                                        this.slides = this.slides.concat(this.filter(data.posts));
                                         this.updateLocked = false;
                                         if (this.currentSlide == 0) {
                                             this.display();
@@ -520,6 +521,29 @@ if (isset($_GET) && count($_GET)) {
                             $("#loader").hide();
                         }
                         this.locked = false;
+                    },
+                    filter: function (data) {
+                        if (filters == null || filters.length == 0) return data;
+                        filters.forEach(filter => {
+                            if (filter.regexp) {
+                                var re = new RegExp(filter.pattern);
+                            }
+                            switch (filter.place) {
+                                case "User":
+                                    data = data.filter(el => !(filter.regexp ? re.test(el.author) : matchRuleShort(el.author, filter.pattern)));
+                                    break;
+                                case "Title":
+                                    data = data.filter(el => !(filter.regexp ? re.test(el.title) : matchRuleShort(el.title, filter.pattern)));
+                                    break;
+                                case "Subred":
+                                    data = data.filter(el => !(filter.regexp ? re.test(el.subreddit) : matchRuleShort(el.subreddit, filter.pattern)));
+                                    break;
+                                case "Flair":
+                                    data = data.filter(el => !(filter.regexp ? re.test(el.link_flair_text) : matchRuleShort(el.link_flair_text, filter.pattern)));
+                                    break;c
+                            }
+                        });
+                        return data;
                     },
                     checkHidden: function () {
                         if ($('body').is(":visible")) {
@@ -838,7 +862,6 @@ if (isset($_GET) && count($_GET)) {
                               /iPod/i,
                               /BlackBerry/i,
                               /Windows Phone/i].some(agent => navigator.userAgent.match(agent))
-               console.log(mobile);
 
                 var messageTimer;
                 function setMessage(text, className = "", object = "") {
@@ -869,6 +892,91 @@ if (isset($_GET) && count($_GET)) {
                     var ss = Math.round(seconds % 3600 % 60);
                     return (hh > 0 ? (hh < 10 ? "0" : "") + hh + ":" : "") + (mm < 10 ? "0" : "") + mm + ":" + (ss < 10 ? "0" : "") + ss;
                 }
+
+                function matchRuleShort(str, rule) {
+                    var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+                    return new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$").test(str);
+                }
+
+                var filters = JSON.parse(storageGet('filters'));
+                $("#filter").on('click', function (e) {
+                    var that = this;
+                    $("#filter-modal").toggle(0, function() {
+                        if($(this).is(':visible'))
+                            displayFilters();
+                    });
+                });
+                $("#addFilter").on('click', function (e) {
+                    if ($("#pattern").val() == "") return;
+                    if (filters == null || filters.length == 0) {
+                        filters = [];
+                        var filtersLastId = 0;
+                    } else {
+                        var filtersLastId = Math.max(...filters.map(f=>f.id));
+                    }
+                    filters.push({
+                        id: ++filtersLastId,
+                        place: $("#place").val(),
+                        pattern: $("#pattern").val(),
+                        regexp: $('#regexp').is(':checked')
+                    });
+                    $("#pattern").val("");
+                    $('#regexp').prop('checked', false);
+                    storageSet('filters', JSON.stringify(filters));
+                    displayFilters();
+                });
+                function displayFilters() {
+                    if (filters == null || filters.length == 0) return;
+                    $("#filter-list ul").empty();
+                    filters.forEach(filter => {
+                        $("#filter-list ul").append(
+                            $("<li />", { 'data-filter-id': filter.id })
+                            .html('<strong>['+filter.place+']</strong> '
+                            +(filter.regexp ? "<tt>/" : "")+filter.pattern+(filter.regexp ? "/</tt>" : "")
+                            +' <a href="#" class="del-filter-btn" data-filter-id="'+filter.id+'" style="color: white">del</a>'));
+                    })
+                    $('.del-filter-btn').on('click', function (e) {
+                        filters = filters.filter(filter => filter.id !== $(this).data('filter-id'));
+                        storageSet('filters', JSON.stringify(filters));
+                        $('#filter-list ul li[data-filter-id="'+$(this).data('filter-id')+'"]').remove();
+                    });
+                }
+                $("#importFilters").on('click', function (e) {
+                    if (!$("#filtersJSON").is(':visible')) {
+                        $("#filtersJSON").show();
+                        return;
+                    }
+                    if ($("#filtersJSON").val() == "") return;
+                    const json = (function(raw) {
+                        try {
+                            return JSON.parse(raw);
+                        } catch (err) {
+                            return false;
+                        }
+                    })($("#filtersJSON").val());
+                    if (json && Array.isArray(json)) {
+                        let i=0,integrity=true;
+                        json.forEach(el => {
+                            if (el.hasOwnProperty("place") && el.hasOwnProperty("pattern") && el.hasOwnProperty("regexp"))
+                                el.id=++i;
+                            else {
+                                integrity = false;
+                                return;
+                            }
+                        });
+                        if (integrity) {
+                            $("#filtersJSON").val() = "";
+                            filters = json;
+                            storageSet('filters', JSON.stringify(filters));
+                            displayFilters();
+                        }
+                    } else {
+                        console.log("JSON syntax error")
+                    }
+                });
+                $("#exportFilters").on('click', function (e) {
+                    $("#filtersJSON").val(JSON.stringify(filters.map(({id, ...keepAttrs}) => keepAttrs))).show();
+                });
 
                 layouts.push({
                     __proto__: layout$
@@ -981,6 +1089,11 @@ if (isset($_GET) && count($_GET)) {
                     }
                     if ($("#sidebar").is(":visible")) {
                         $("#sidebar").hide();
+                        return;
+                    }
+                    if ($("#filter-modal").is(":visible")) {
+                        $("#filtersJSON").empty().hide();
+                        $("#filter-modal").hide();
                         return;
                     }
                     $(".header").toggle();
@@ -1107,6 +1220,7 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.update();
                     $("#sibebar, #sort-menu").hide();
                 });
+
                 var timer;
                 var hided = false;
                 $(window).on("mousemove", function () {
@@ -1670,7 +1784,7 @@ if (isset($_GET) && count($_GET)) {
                 vertical-align: middle;
             }
 
-            #sort-menu, #help {
+            #sort-menu, #help, #filter-modal {
                 position: fixed;
                 left: 50%;
                 top: 50%;
@@ -1820,6 +1934,28 @@ if (isset($_GET) && count($_GET)) {
                 height: 3rem;
             }
 
+            #filter-modal {
+                display: none;
+                width: 22rem;
+            }
+
+            #filter-form, #filter-list {
+                margin-bottom: 1rem;
+            }
+
+            #pattern {
+                width: 10rem;
+            }
+            #filter-list ul {
+                list-style: none;
+            }
+
+            #filtersJSON {
+                display: none;
+                width: 100%;
+                height: 5rem;
+            }
+
             @media screen and (max-width: 800px) {
                 .subheader-container {
                     line-height: initial;
@@ -1874,6 +2010,10 @@ if (isset($_GET) && count($_GET)) {
                     </svg>
                     </label>
                 </div>
+
+                <svg id="filter" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
+                  <polygon points="61.5417,42.3082 100.0032,3.8466 0.0032,3.8466 38.4648,42.3081 38.4648,96.1543 61.5417,80.7697"/>
+                </svg>
 
                 <svg id="open-post" class="svg-icon button" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
                     <path d="M 69.230769,8.9743398 V 20.352545 C 52.362308,24.638186 28.322436,36.108955 20.512821,60.256429 40.027692,43.130622 67.62,44.996455 69.230769,45.072096 v 11.37818 L 100,32.732353 Z M 5.1282051,16.666647 C 2.4432051,16.666917 2.5641026e-4,19.109801 0,21.794853 v 64.102602 c 2.5641026e-4,2.685 2.4432051,5.127949 5.1282051,5.128205 H 71.794872 c 2.685,-2.56e-4 5.127949,-2.443205 5.128205,-5.128205 V 56.971173 l -4.567308,3.525641 -5.689102,4.407051 V 80.76925 H 10.25641 V 26.923058 h 30.889487 c 7.50218,-4.802372 15.465129,-8.103911 22.596154,-10.256411 z"/>
@@ -2002,6 +2142,27 @@ if (isset($_GET) && count($_GET)) {
               <dt><span>h</span></dt><dd>Toggle this help</dd>
               <dt><span>i</span></dt><dd>Test</dd>
             </dl>
+        </div>
+        <div id="filter-modal">
+            <div id="filter-list">
+                <ul></ul>
+            </div>
+            <div id="filter-form">
+                <select id="place">
+                    <option value="User">User</option>
+                    <option value="Title">Title</option>
+                    <option value="Subred">Subreddit</option>
+                    <option value="Flair">Flair</option>
+                </select>
+                <input id="pattern" type="text">
+                <input id="regexp" type="checkbox"><label for="regexp">RegExp</label>
+                <button id="addFilter" type="button">Add</button>
+            </div>
+            <div id="filter-import-export">
+                <textarea id="filtersJSON" type="textarea"></textarea>
+                <button id="importFilters" type="button">Import</button>
+                <button id="exportFilters" type="button">Export</button>
+            </div>
         </div>
         <div class="svg-container" style="display:none">
             <svg id="error-icon">
