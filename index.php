@@ -2,7 +2,7 @@
 function version($full=true) {
     $major = "1";
     $minor = "4";
-    $commit = trim(exec('git rev-list HEAD'));
+    $commit = trim(exec('git rev-list HEAD | wc -l'));
     $hash = trim(exec('git log --pretty="%h" -n1 HEAD'));
     $date = new \DateTime(trim(exec('git log -n1 --pretty=%ci HEAD')));
     $date->setTimezone(new \DateTimeZone('UTC'));
@@ -965,7 +965,7 @@ if (isset($_GET) && count($_GET)) {
                             }
                         });
                         if (integrity) {
-                            $("#filtersJSON").val() = "";
+                            $("#filtersJSON").val('');
                             filters = json;
                             storageSet('filters', JSON.stringify(filters));
                             displayFilters();
