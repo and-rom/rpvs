@@ -1096,7 +1096,7 @@ if (isset($_GET) && count($_GET)) {
                         return;
                     }
                     if ($("#filter-modal").is(":visible")) {
-                        $("#filtersJSON").empty().hide();
+                        $("#filtersJSON").val("").hide();
                         $("#filter-modal").hide();
                         return;
                     }
