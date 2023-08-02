@@ -965,7 +965,7 @@ if (isset($_GET) && count($_GET)) {
                             }
                         });
                         if (integrity) {
-                            $("#filtersJSON").val('');
+                            $("#filtersJSON").val('').hide();
                             filters = json;
                             storageSet('filters', JSON.stringify(filters));
                             displayFilters();
@@ -975,7 +975,11 @@ if (isset($_GET) && count($_GET)) {
                     }
                 });
                 $("#exportFilters").on('click', function (e) {
-                    $("#filtersJSON").val(JSON.stringify(filters.map(({id, ...keepAttrs}) => keepAttrs))).show();
+                    $("#filtersJSON").val(JSON.stringify(filters
+                                .map(({id, ...keepAttrs}) => keepAttrs)
+                                .sort((a, b) => ['Title','Flair','Subred','User'].indexOf(a.place) - ['Title','Flair','Subred','User'].indexOf(b.place))
+                            ))
+                        .show();
                 });
 
                 layouts.push({
@@ -1943,8 +1947,13 @@ if (isset($_GET) && count($_GET)) {
                 margin-bottom: 1rem;
             }
 
+            #filter-list {
+                max-height: 25rem;
+                overflow: scroll;
+            }
+
             #pattern {
-                width: 10rem;
+                width: 9rem;
             }
             #filter-list ul {
                 list-style: none;
@@ -2149,10 +2158,10 @@ if (isset($_GET) && count($_GET)) {
             </div>
             <div id="filter-form">
                 <select id="place">
-                    <option value="User">User</option>
                     <option value="Title">Title</option>
-                    <option value="Subred">Subreddit</option>
                     <option value="Flair">Flair</option>
+                    <option value="Subred">Subreddit</option>
+                    <option value="User">User</option>
                 </select>
                 <input id="pattern" type="text">
                 <input id="regexp" type="checkbox"><label for="regexp">RegExp</label>
