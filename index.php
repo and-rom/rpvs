@@ -1949,7 +1949,7 @@ if (isset($_GET) && count($_GET)) {
 
             #filter-list {
                 max-height: 25rem;
-                overflow: scroll;
+                overflow-y: scroll;
             }
 
             #pattern {
