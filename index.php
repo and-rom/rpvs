@@ -438,6 +438,9 @@ if (isset($_GET) && count($_GET)) {
                     locked: false,
                     wasHidden: false,
                     updateLocked: false,
+                    slideshow: false,
+                    slideshowTimeout: null,
+                    slideshowTimer: 5,
                     // Methods
                     save: function () {
                         storageSet('layoutType', this.layoutType);
@@ -644,6 +647,10 @@ if (isset($_GET) && count($_GET)) {
                             $('#content').empty().append($(".svg-container #error-icon").clone());
                             setMessage("Load error");
                             that.unlock();
+                            if (that.slideshow)
+                                that.slideshowTimeout = setTimeout(() => {
+                                    that.show(-1);
+                                }, that.slideshowTimer / 5 * 1000);
                         };
                         this.iframe.onload = function () {
                             $('#content').empty();
@@ -654,6 +661,10 @@ if (isset($_GET) && count($_GET)) {
                             $(this).appendTo('#content').attr('id', "photo").addClass("photo");
                             that.resize();
                             that.unlock();
+                            if (that.slideshow)
+                                that.slideshowTimeout = setTimeout(() => {
+                                    that.show(-1);
+                                }, that.slideshowTimer * 1000);
                         };
                     },
                     displayVideo: function () {
@@ -666,6 +677,8 @@ if (isset($_GET) && count($_GET)) {
                             style: 'visibility: hidden'
                         }));
                         this.iframe = $('video').first();
+
+                        if (this.slideshow) $(this.iframe).prop('loop', false);
 
                         $(this.iframe).removeAttr("controls");
                         $(this.iframe).prop("controls", false);
@@ -712,9 +725,16 @@ if (isset($_GET) && count($_GET)) {
                             })
                             .on('canplay', () => {
                                 $("#loader").hide();
+                            })
+                            .on('ended', () => {
+                                that.show(-1);
                             });
                     },
                     show: function (whereTo) {
+                        if (this.slideshowTimeout) {
+                            clearTimeout(this.slideshowTimeout);
+                            this.slideshowTimeout = null;
+                        }
                         if (!this.locked && this.slides.length > 0) {
                             if (this.slides[this.currentSlide].type == "video" && typeof this.iframe[0] !== 'undefined' && this.slides[this.currentSlide].video_type == "tumblr") {
                                 this.iframe[0].pause();
@@ -844,6 +864,8 @@ if (isset($_GET) && count($_GET)) {
                         console.log("this.after: " + this.after);
                         console.log("this.currentSlide: " + this.currentSlide);
                         console.log("this.slides.length: " + this.slides.length);
+                        console.log("this.slideshow", this.slideshow);
+                        console.log("this.slideshowTimeout", this.slideshowTimeout);
                         console.log("this.slides");
                         console.log(this.slides[this.currentSlide]);
                         console.log(this.slides);
@@ -1223,6 +1245,52 @@ if (isset($_GET) && count($_GET)) {
                     currentLayout.clearPostInfo();
                     currentLayout.update();
                     $("#sibebar, #sort-menu").hide();
+                });
+
+                $("#slideshow").on('click', function (e) {
+                    $('#play').toggleClass('hidden');
+                    $('#pause').toggleClass('hidden');
+                    currentLayout.slideshow = !currentLayout.slideshow;
+                    if (currentLayout.slideshow) {
+                        //start slideshow
+                        $('#slideshow-timer').show();
+                        switch (currentLayout.slides[currentLayout.currentSlide].type) {
+                        case 'photo':
+                            currentLayout.slideshowTimeout = setTimeout(() => {
+                                currentLayout.show(-1);
+                            }, currentLayout.slideshowTimer * 1000);
+                            break;
+                        case 'video':
+                            $(currentLayout.iframe[0]).prop('loop', false)
+                            break;
+                        }
+                    } else {
+                        //stop slideshow
+                        $('#slideshow-timer').hide();
+                        if (currentLayout.slideshowTimeout) {
+                            clearTimeout(currentLayout.slideshowTimeout);
+                            currentLayout.slideshowTimeout = null;
+                        }
+                        if (currentLayout.slides[currentLayout.currentSlide].type == 'video') $(currentLayout.iframe[0]).prop('loop',true);
+                    }
+                });
+
+                $("#slideshow-timer").on('click', function (e) {
+                    currentLayout.slideshowTimer = (currentLayout.slideshowTimer / 5 % 3 + 1) * 5;
+                    switch (currentLayout.slideshowTimer) {
+                        case 5:
+                            $('#timer-five').toggleClass('hidden');
+                            $('#timer-fifteen').toggleClass('hidden');
+                            break;
+                        case 10:
+                            $('#timer-five').toggleClass('hidden');
+                            $('#timer-ten').toggleClass('hidden');
+                            break;
+                        case 15:
+                            $('#timer-ten').toggleClass('hidden');
+                            $('#timer-fifteen').toggleClass('hidden');
+                            break;
+                    }
                 });
 
                 var timer;
@@ -1965,6 +2033,10 @@ if (isset($_GET) && count($_GET)) {
                 height: 5rem;
             }
 
+            .hidden {
+                visibility: hidden;
+            }
+
             @media screen and (max-width: 800px) {
                 .subheader-container {
                     line-height: initial;
@@ -1997,6 +2069,33 @@ if (isset($_GET) && count($_GET)) {
                 <span id="sort"></span>
             </div>
             <div id="buttons-right">
+
+                <svg id="slideshow" class="svg-icon button" viewBox="0 0 100 100" x="0px" y="0px" width="100" height="100">
+                    <g id="play">
+                        <polygon points="7.434,100.00031870000001 7.434,-1.3e-06 92.5662,50.0001587"/>
+                    </g>
+                    <g id="pause" class="hidden">
+                        <path d="M 7.4338083,-5.4499998e-7 H 35.947047 V 99.999999 H 7.4338083 Z" />
+                        <path d="M 64.052956,-5.4499998e-7 H 92.566195 V 99.999999 H 64.052956 Z" />
+                    </g>
+                </svg>
+
+                <svg id="slideshow-timer" class="svg-icon button" style="display:none" x="0px" y="0px" viewBox="0 0 100 100" width="100" height="100">
+                    <path d="M 81.258681,67.555554 96.296875,45.111109 H 86.036458 C 83.592014,24.666666 66.147569,8.666666 45.036458,8.666666 22.258681,8.666666 3.703125,27.222221 3.703125,50 c 0,22.777777 18.555556,41.333334 41.333333,41.333334 8.333334,0 16.333334,-2.444446 23.111111,-7.111111 l -5.777777,-8.444445 c -5.111111,3.444445 -11.111111,5.333332 -17.333334,5.333332 -17.111111,0 -31.111111,-14 -31.111111,-31.11111 0,-17.111112 14,-31.111112 31.111111,-31.111112 15.444445,0 28.333334,11.333334 30.666667,26.222223 h -9.326389 z"/>
+                    <g id="timer-five">
+                        <path d="m 40.213543,45.625 q 2.5,-0.5 4.6875,-0.5 2.21875,0 4.375,0.875 2.1875,0.84375 3.625,2.3125 2.875,2.9375 2.875,7.59375 0,5.8125 -3.78125,9.0625 -3.78125,3.25 -10.78125,3.25 -3,0 -7.25,-1.1875 v -6 q 4.125,1.1875 7.3125,1.1875 8.71875,0 8.71875,-6.125 0,-5.53125 -7.53125,-5.53125 -3.25,0 -6,1.15625 l -2.09375,-3.15625 2.25,-16.78125 h 17.0625 v 5.65625 h -12.28125 z"/>
+                    </g>
+                    <g id="timer-ten" class="hidden">
+                        <path d="m 36.588543,67.90625 h -5.25 V 37.9375 l -6.90625,2.71875 V 35 l 6.90625,-2.9375 h 5.25 z"/>
+                        <path d="m 65.307293,49.90625 q 0,8.375 -3.3125,13.46875 -3.28125,5.09375 -9.65625,5.09375 -6.375,0 -9.59375,-5.09375 -3.21875,-5.125 -3.21875,-13.46875 0,-12.9375 7.1875,-17 2.4375,-1.375 7.3125,-1.375 4.90625,0 8.09375,5 3.1875,5 3.1875,13.375 z m -7.875,9.9375 q 1.78125,-3.3125 1.78125,-9.9375 0,-6.625 -1.78125,-9.75 Q 55.651043,37 52.401043,37 q -3.25,0 -5.15625,3.15625 -1.875,3.125 -1.875,9.71875 0,6.59375 1.90625,9.9375 1.9375,3.3125 5.15625,3.3125 3.25,0 5,-3.28125 z"/>
+                    </g>
+                    <g id="timer-fifteen" class="hidden">
+                        <path d="m 38.557293,67.65625 h -5.25 V 37.6875 l -6.90625,2.71875 V 34.75 l 6.90625,-2.9375 h 5.25 z"/>
+                        <path d="m 47.776043,45.625 q 2.5,-0.5 4.6875,-0.5 2.21875,0 4.375,0.875 2.1875,0.84375 3.625,2.3125 2.875,2.9375 2.875,7.59375 0,5.8125 -3.78125,9.0625 -3.78125,3.25 -10.78125,3.25 -3,0 -7.25,-1.1875 v -6 q 4.125,1.1875 7.3125,1.1875 8.71875,0 8.71875,-6.125 0,-5.53125 -7.53125,-5.53125 -3.25,0 -6,1.15625 l -2.09375,-3.15625 2.25,-16.78125 h 17.0625 v 5.65625 h -12.28125 z"/>
+                    </g>
+                </svg>
+
+
                 <div class="radio-toolbar button">
                     <input type="radio" id="type-photo" name="type">
                     <label class="button" for="type-photo">
