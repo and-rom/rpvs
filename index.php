@@ -726,7 +726,6 @@ if (isset($_GET) && count($_GET)) {
                                     } else {
                                         var pc = 1 + that.slideshowTimer / 5 - 1;
                                     }
-                                    console.log("play-count", pc);
                                     $(that.iframe).data('play-count', pc);
                                 }
                                 that.iframe[0].play();
@@ -1161,6 +1160,7 @@ if (isset($_GET) && count($_GET)) {
                     $("#help").hide();
                     $("#back").show();
                     if (layouts.length > 2) $("#home").show();
+                    toggleSlideshow();
                 });
                 $("#open-post").on('click',function (e){
                     if (typeof currentLayout.slides[currentLayout.currentSlide].link !== 'undefined' && currentLayout.slides[currentLayout.currentSlide].link !== '')
@@ -1190,6 +1190,7 @@ if (isset($_GET) && count($_GET)) {
                     $("#help").hide();
                     if (layouts.length < 3) $("#home").hide();
                     if (layouts.length == 1) $("#back").hide();
+                    toggleSlideshow();
                 });
                 $("#layout").on('click', function (e) {
                     $("#sidebar").toggle();
@@ -1268,11 +1269,15 @@ if (isset($_GET) && count($_GET)) {
                 });
 
                 $("#slideshow").on('click', function (e) {
-                    $('#play').toggleClass('hidden');
-                    $('#pause').toggleClass('hidden');
                     currentLayout.slideshow = !currentLayout.slideshow;
+                    toggleSlideshow(true);
+                });
+
+                function toggleSlideshow(clickBtn = false) {
                     if (currentLayout.slideshow) {
                         //start slideshow
+                        $('#play').removeClass('visible').addClass('hidden');
+                        $('#pause').removeClass('hidden').addClass('visible');
                         $('#slideshow-timer').show();
                         switch (currentLayout.slides[currentLayout.currentSlide].type) {
                         case 'photo':
@@ -1286,14 +1291,16 @@ if (isset($_GET) && count($_GET)) {
                         }
                     } else {
                         //stop slideshow
+                        $('#play').removeClass('hidden').addClass('visible');
+                        $('#pause').removeClass('visible').addClass('hidden');
                         $('#slideshow-timer').hide();
                         if (currentLayout.slideshowTimeout) {
                             clearTimeout(currentLayout.slideshowTimeout);
                             currentLayout.slideshowTimeout = null;
                         }
-                        if (currentLayout.slides[currentLayout.currentSlide].type == 'video') $(currentLayout.iframe[0]).prop('loop',true);
+                        if (clickBtn && currentLayout.slides[currentLayout.currentSlide].type == 'video') $(currentLayout.iframe[0]).prop('loop',true);
                     }
-                });
+                }
 
                 $("#slideshow-timer").on('click', function (e) {
                     currentLayout.slideshowTimer = (currentLayout.slideshowTimer / 5 % 3 + 1) * 5;
@@ -2051,6 +2058,10 @@ if (isset($_GET) && count($_GET)) {
                 display: none;
                 width: 100%;
                 height: 5rem;
+            }
+
+            .visible {
+                visibility: visible;
             }
 
             .hidden {
