@@ -715,19 +715,39 @@ if (isset($_GET) && count($_GET)) {
                                 $("#loader").show();
                             })
                             .on('loadeddata', function () {
-                                this.play();
+                                $(that.iframe).data('play-test', 'test');
+                                if (that.slideshow) {
+                                    if (this.duration <= 1) {
+                                        var pc = Math.ceil(that.slideshowTimer / this.duration);
+                                    } else if (this.duration <= 7) {
+                                        var pc = 3 + that.slideshowTimer / 5 - 1;
+                                    } else if (this.duration > 7 && this.duration <= 15) {
+                                        var pc = 2 + that.slideshowTimer / 5 - 1;
+                                    } else {
+                                        var pc = 1 + that.slideshowTimer / 5 - 1;
+                                    }
+                                    console.log("play-count", pc);
+                                    $(that.iframe).data('play-count', pc);
+                                }
+                                that.iframe[0].play();
                             })
                             .on('seeking', () => {
                                 $("#loader").show();
                             })
                             .on('waiting', () => {
-                                $("#loader").show();
+                                if (this.duration > 1) $("#loader").show();
                             })
                             .on('canplay', () => {
                                 $("#loader").hide();
                             })
                             .on('ended', () => {
-                                that.show(-1);
+                                var pc = $(that.iframe).data('play-count') - 1;
+                                if (pc > 0) {
+                                    $(that.iframe).data('play-count', pc);
+                                    that.iframe[0].play();
+                                } else {
+                                    that.show(-1);
+                                }
                             });
                     },
                     show: function (whereTo) {
