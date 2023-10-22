@@ -1057,6 +1057,7 @@ if (isset($_GET) && count($_GET)) {
                     if (layoutParams.layoutType == "feed") {
                         layouts.splice(0, 0, currentLayout)
                     } else {
+                        history.pushState(null, null);
                         layouts.push(currentLayout);
                     }
                     currentLayout.clearPostInfo();
@@ -1119,6 +1120,15 @@ if (isset($_GET) && count($_GET)) {
                     });
                 });
 
+                $(window).bind('beforeunload', function(e){
+                    e.preventDefault();
+                    return e.returnValue = "Are you sure you want to leave?";
+                });
+
+                $(window).bind('popstate', function(event) {
+                    $("#back").click();
+                });
+
                 $(window).resize(function (e) {
                     currentLayout.resize()
                 });
@@ -1144,6 +1154,7 @@ if (isset($_GET) && count($_GET)) {
                     $(".header").toggle();
                 });
                 $(document).on('click', '.subreddit, .multireddit, #author', function (e) {
+                    history.pushState(null, null);
                     layouts.push({
                         __proto__: layout$,
                         layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
