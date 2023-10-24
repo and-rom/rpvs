@@ -1057,7 +1057,6 @@ if (isset($_GET) && count($_GET)) {
                     if (layoutParams.layoutType == "feed") {
                         layouts.splice(0, 0, currentLayout)
                     } else {
-                        history.pushState(null, null);
                         layouts.push(currentLayout);
                     }
                     currentLayout.clearPostInfo();
@@ -1125,8 +1124,14 @@ if (isset($_GET) && count($_GET)) {
                     return e.returnValue = "Are you sure you want to leave?";
                 });
 
-                $(window).bind('popstate', function(event) {
-                    $("#back").click();
+                history.pushState({}, "");
+                $(window).bind('popstate', function(e) {
+                    if (layouts.length > 1) {
+                        $("#back").click();
+                    } else {
+                        history.go(2-history.length);
+                    }
+                    history.pushState({}, "");
                 });
 
                 $(window).resize(function (e) {
@@ -1154,7 +1159,6 @@ if (isset($_GET) && count($_GET)) {
                     $(".header").toggle();
                 });
                 $(document).on('click', '.subreddit, .multireddit, #author', function (e) {
-                    history.pushState(null, null);
                     layouts.push({
                         __proto__: layout$,
                         layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
