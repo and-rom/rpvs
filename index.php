@@ -189,6 +189,7 @@ if (isset($_GET) && count($_GET)) {
                 $obj->score = $post->data->score;
                 $obj->num_comments = $post->data->num_comments;
                 $obj->over_18 = $post->data->over_18;
+                $obj->pinned = $post->data->pinned;
                 $obj->all_awardings = [];
                 foreach ($post->data->all_awardings as $award) {
                     $obj->all_awardings[] = $award->resized_static_icons[0]->url;
@@ -623,6 +624,7 @@ if (isset($_GET) && count($_GET)) {
                         if (this.slides[this.currentSlide].total_awards_received > 0) {
                             $("#total_awards_received span").html(this.slides[this.currentSlide].total_awards_received); $("#total_awards_received").show();
                         }
+                        $("#pinned").toggle(this.slides[this.currentSlide].pinned);
                     },
                     clearPostInfo: function () {
                         $("#title").empty().hide();
@@ -638,6 +640,7 @@ if (isset($_GET) && count($_GET)) {
                         $("#nsfw").hide();
                         $("#all_awardings").empty().hide();
                         $("#total_awards_received span").empty(); $("#total_awards_received").hide();
+                        $("#pinned").hide();
                     },
                     displayPhoto: function () {
                         this.iframe = new Image();
@@ -1746,10 +1749,16 @@ if (isset($_GET) && count($_GET)) {
                 font-size: large;
             }
 
-            #nsfw {
+            #nsfw, #pinned {
                 text-shadow: none;
                 vertical-align: bottom;
                 margin: 0 8px;
+            }
+
+            #pinned {
+                color: green;
+                font-size: 0.7rem;
+                margin-left: 0;
             }
 
             #all_awardings img {
@@ -2203,6 +2212,7 @@ if (isset($_GET) && count($_GET)) {
                 <div id="nsfw" class="subheader-container" style="display: none;">&#128286;</div>
                 <div id="all_awardings" class="subheader-container" style="display: none;"></div>
                 <div id="total_awards_received" class="subheader-container" style="display: none;"><span>0</span> awards</div>
+                <div id="pinned" class="subheader-container" style="display: none;">&#128392;</div>
             </div>
         </div>
         <div id="messages"></div>
