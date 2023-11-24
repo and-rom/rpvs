@@ -1931,8 +1931,10 @@ if (isset($_GET) && count($_GET)) {
 
             #sort-controversial::after,
             #sort-top::after {
-                content: '\23F5';
-                margin-left: 1rem;
+                content: '\25B6';
+                margin-left: 0.5rem;
+                font-size: small;
+                vertical-align: text-top;
             }
 
             #sort-menu .svg-icon {
