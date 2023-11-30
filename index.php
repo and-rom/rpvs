@@ -172,10 +172,12 @@ if (isset($_GET) && count($_GET)) {
                 $obj->url = $post->data->url;
                 $obj->subreddit = $post->data->subreddit;
                 $obj->subreddit_url = '/'.$post->data->subreddit_name_prefixed.'/';
-                $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
-                $obj->parent_url = !empty($post->data->crosspost_parent_list) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
                 $obj->author = $post->data->author;
                 $obj->author_url = '/user/'.$post->data->author.'/submitted/';
+                $obj->parent = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->subreddit : "" ;
+                $obj->parent_url = !empty($post->data->crosspost_parent_list) ? '/'.$post->data->crosspost_parent_list[0]->subreddit_name_prefixed.'/' : "" ;
+                $obj->parent_author = !empty($post->data->crosspost_parent_list) ? $post->data->crosspost_parent_list[0]->author : "" ;
+                $obj->parent_author_url = !empty($post->data->crosspost_parent_list) ? '/user/'.$post->data->crosspost_parent_list[0]->author.'/submitted/' : "" ;
                 $obj->locked = $post->data->locked;
                 if (isset($post->data->link_flair_text)) {
                     $obj->link_flair_text = $post->data->link_flair_text;
@@ -594,11 +596,21 @@ if (isset($_GET) && count($_GET)) {
                     displayPostInfo: function () {
                         $("#title").html(this.slides[this.currentSlide].title).show();
                         $("#subreddit").html(this.slides[this.currentSlide].subreddit).attr('data-url', this.slides[this.currentSlide].subreddit_url).show();
-                        if (this.slides[this.currentSlide].parent != "") {
-                            $("#parent span").html(this.slides[this.currentSlide].parent)
-                            $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url).show();
-                        }
                         $("#author").html(this.slides[this.currentSlide].author).attr('data-url', this.slides[this.currentSlide].author_url).show();
+                        if (this.slides[this.currentSlide].parent != "") {
+                            $("#author").removeClass('with-dot');
+                            $("#parent").html(this.slides[this.currentSlide].parent);
+                            $("#parent").attr('data-url', this.slides[this.currentSlide].parent_url);
+                            if (this.slides[this.currentSlide].author != this.slides[this.currentSlide].parent_author) {
+                                $("#parent-author").html(this.slides[this.currentSlide].parent_author);
+                                $("#parent-author").attr('data-url', this.slides[this.currentSlide].parent_author_url);
+                            } else {
+                                $("#parent-author").hide();
+                            }
+                            $("#parent-container").show();
+                        } else {
+                            $("#author").addClass('with-dot');
+                        }
                         $("#locked").toggle(this.slides[this.currentSlide].locked);
                         if (this.slides[this.currentSlide].link_flair_text) {
                             $("#flair").empty().append($('<span />', {
@@ -628,9 +640,9 @@ if (isset($_GET) && count($_GET)) {
                     },
                     clearPostInfo: function () {
                         $("#title").empty().hide();
-                        $("#subreddit").empty().hide().removeData();
-                        $("#parent span").empty(); $("#parent").hide().removeData();
-                        $("#author").empty().hide().removeData();
+                        $("#subreddit").empty().removeData().removeAttr("data-url").hide();
+                        $("#parent-container div").empty().removeData().removeAttr("data-url").show(); $("#parent-container").hide();
+                        $("#author").empty().removeData().removeAttr("data-url").hide();
                         $("#locked").hide();
                         $("#flair").empty().hide();
                         $("#domain").empty().hide();
@@ -1161,10 +1173,10 @@ if (isset($_GET) && count($_GET)) {
                     }
                     $(".header").toggle();
                 });
-                $(document).on('click', '.subreddit, .multireddit, #author', function (e) {
+                $(document).on('click', '.subreddit, .multireddit, #author, #parent-author', function (e) {
                     layouts.push({
                         __proto__: layout$,
-                        layoutType: this.id == "author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
+                        layoutType: this.id == "author" || this.id == "parent-author" ? "u" : $(this).hasClass("multireddit") ? "mr" : "sr",
                         path: $(this).data("url")
                     });
                     currentLayout = layouts[layouts.length - 1];
@@ -1409,17 +1421,21 @@ if (isset($_GET) && count($_GET)) {
                             // back
                             $("#back").click();
                             break;
-                        case 69: // 'e'
+                        case 83: // 's'
                             // subreddit
                             $("#subreddit").click();
-                            break;
-                        case 83: // 's'
-                            // parent
-                            $("#parent").click();
                             break;
                         case 88: // 'x'
                             // author
                             $("#author").click();
+                            break;
+                        case 69: // 'e'
+                            // parent
+                            $("#parent").click();
+                            break;
+                        case 82: // 'r'
+                            // parent-author
+                            $("#parent-author").click();
                             break;
                         /*case 70: // 'f'
                             // follow
@@ -1620,6 +1636,7 @@ if (isset($_GET) && count($_GET)) {
             .subreddit,
             .multireddit,
             #author,
+            #parent-author,
             .home {
                 cursor: pointer;
             }
@@ -1730,6 +1747,10 @@ if (isset($_GET) && count($_GET)) {
             #subreddit,
             #parent {
                 color: dodgerblue;
+            }
+
+            #parent-container {
+                margin-left: 5px;
             }
 
             #parent-icon {
@@ -2196,13 +2217,14 @@ if (isset($_GET) && count($_GET)) {
             <div id="title"></div>
             <div class="row">
                 <div id="subreddit" class="subheader-container with-dot subreddit" style="display: none;"></div>
-                <div id="parent" class="subheader-container with-dot subreddit" style="display: none;">
+                <div id="author" class="subheader-container with-dot" style="display: none;"></div>
+                <div id="parent-container" class="subheader-container" style="display: none;">
                     <svg id="parent-icon" class="svg-icon" x="0px" y="0px" viewBox="0 0 100 100" width="100%" height="100%">
                         <path d="m 71.514718,69.553009 c -6.753854,-0.893227 -10.975013,-5.016394 -16.42483,-10.877021 -2.626917,-2.834206 -5.381977,-5.962386 -8.758904,-8.740059 5.261373,-4.390759 9.090567,-9.497607 13.127049,-13.202427 3.81035,-3.471149 7.164663,-5.728715 12.056685,-6.361889 V 40.07274 L 99.992462,23.629066 71.514718,7.185392 v 9.9951 c -12.591867,1.002525 -20.54046,8.962424 -26.137264,15.124562 -3.082953,3.376927 -5.792786,6.376965 -8.336788,8.26141 -2.58169,1.888215 -4.62443,2.751291 -7.586778,2.796518 -0.0038,0 -0.0075,0 -0.01131,0 H 0 v 13.19112 h 0.0038 v 0.0038 c 0,0 0.173369,-0.0038 0.516338,-0.0038 h 28.933781 c 2.962348,0.04146 5.012625,0.908303 7.601854,2.800287 3.848038,2.796517 7.895828,8.219952 13.387103,13.447405 4.944785,4.741266 11.921004,9.267704 21.07941,9.972487 V 92.814608 L 100,76.397317 71.522255,59.96118 l -0.0075,9.591829 z"/>
                     </svg>
-                    <span></span>
+                    <div id="parent" class="subheader-container with-dot subreddit"></div>
+                    <div id="parent-author" class="subheader-container with-dot"></div>
                 </div>
-                <div id="author" class="subheader-container with-dot" style="display: none;"></div>
                 <div id="locked" class="subheader-container with-dot" style="display: none;">&#128274;</div>
                 <div id="flair" class="subheader-container with-dot" style="display: none;"></div>
                 <div id="domain" class="subheader-container with-dot" style="display: none;"></div>
