@@ -1808,7 +1808,6 @@ if (isset($_GET) && count($_GET)) {
             }
 
             #pinned {
-                color: green;
                 font-size: 0.7rem;
                 margin-left: 0;
             }
@@ -2267,7 +2266,7 @@ if (isset($_GET) && count($_GET)) {
                 <div id="nsfw" class="subheader-container" style="display: none;">&#128286;</div>
                 <div id="all_awardings" class="subheader-container" style="display: none;"></div>
                 <div id="total_awards_received" class="subheader-container" style="display: none;"><span>0</span> awards</div>
-                <div id="pinned" class="subheader-container" style="display: none;">&#128392;</div>
+                <div id="pinned" class="subheader-container" style="display: none;">&#128204;</div>
             </div>
         </div>
         <div id="messages"></div>
