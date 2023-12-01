@@ -1512,10 +1512,19 @@ if (isset($_GET) && count($_GET)) {
                 var xDiffPrev = 0;
                 var touchOff = false;
                 var mouseButtonDown = false;
+                var scaling = false;
+                var distDown, distUp = null;
                 $("#content").bind('touchstart', function (ev) {
                     ev.stopPropagation();
                     if (touchOff) { return; }
                     var e = ev.originalEvent;
+                    if (e.touches.length === 2) {
+                        scaling = true;
+                        distDown = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY);
+                        return;
+                    }
                     xDown = e.touches[0].clientX;
                     yDown = e.touches[0].clientY;
                 });
@@ -1523,6 +1532,12 @@ if (isset($_GET) && count($_GET)) {
                     ev.stopPropagation();
                     if (touchOff) { return; }
                     var e = ev.originalEvent;
+                    if (scaling) {
+                        distUp = Math.hypot(
+                            e.touches[0].clientX - e.touches[1].clientX,
+                            e.touches[0].clientY - e.touches[1].clientY);
+                        return;
+                    }
                     if (!xDown || !yDown) { return; }
                     xUp = e.touches[0].clientX;
                     yUp = e.touches[0].clientY;
@@ -1550,6 +1565,22 @@ if (isset($_GET) && count($_GET)) {
                 $("#content").bind('touchend', function (ev) {
                     ev.stopPropagation();
                     if (touchOff) { return; }
+                    if (scaling) {
+                        scaling = false;
+                        var notFullScreen = !document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement;
+                        var requestFullScreen = document.documentElement.requestFullscreen || document.documentElement.mozRequestFullScreen || document.documentElement.webkitRequestFullScreen || document.documentElement.msRequestFullscreen;
+                        var cancelFullScreen = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                        if (distDown < distUp) {
+                            setMessage("Zoom in");
+                            if (notFullscreen)
+                                requestFullScreen.call(document.documentElement);
+                        } else {
+                            setMessage("Zoom out");
+                            if (!notFullscrenn)
+                                cancelFullScreen.call(document);
+                        }
+                        return;
+                    }
                     if (typeof xUp == 'undefined' || !xUp || !yUp) { return; }
                     var xDiff = xDown - xUp;
                     var yDiff = yDown - yUp;
